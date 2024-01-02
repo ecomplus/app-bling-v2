@@ -38,7 +38,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       documentRef.get()
         .then((documentSnapshot) => {
           if (documentSnapshot.exists &&
-            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 60 * 60 * 1000 // token expires in 60 min
+            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 10000 // token expires in 21600 ms
           ) {
             authenticate(documentSnapshot.get('access_token'))
           } else {
