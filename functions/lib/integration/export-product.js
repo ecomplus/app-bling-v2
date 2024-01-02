@@ -1,12 +1,13 @@
 const ecomUtils = require('@ecomplus/utils')
 const ecomClient = require('@ecomplus/client')
 const errorHandling = require('../store-api/error-handling')
-const Bling = require('../bling/constructor')
+const Bling = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-bling')
 const handleJob = require('./handle-job')
 
 module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const productId = queueEntry.nextId
+  const { client_id, client_secret, code } = appData
   return ecomClient.store({
     storeId,
     url: `/products/${productId}.json`
@@ -24,7 +25,7 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
       if (!blingProductCode) {
         blingProductCode = product.sku
       }
-      const bling = new Bling(blingToken)
+      const bling = new Bling(client_id, client_secret, code, storeId)
 
       const job = bling.get(`/produto/${blingProductCode}`, {
         params: {

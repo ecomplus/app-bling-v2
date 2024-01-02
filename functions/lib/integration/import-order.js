@@ -1,5 +1,5 @@
 const { firestore } = require('firebase-admin')
-const Bling = require('../bling/constructor')
+const Bling = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-ecomplus/')
 const parseStatus = require('./parsers/order-to-ecomplus/status')
 const handleJob = require('./handle-job')
@@ -16,7 +16,8 @@ const getLastStatus = records => {
 
 module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData) => {
   const blingOrderNumber = queueEntry.nextId
-  const bling = new Bling(blingToken)
+  const { client_id, client_secret, code } = appData
+  const bling = new Bling(client_id, client_secret, code, storeId)
 
   const job = bling.get(`/pedido/${blingOrderNumber}`)
     .then(({ data }) => {

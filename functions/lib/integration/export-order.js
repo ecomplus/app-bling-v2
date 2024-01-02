@@ -2,13 +2,14 @@
 
 const ecomUtils = require('@ecomplus/utils')
 const errorHandling = require('../store-api/error-handling')
-const Bling = require('../bling/constructor')
+const Bling = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-bling/')
 const parseStatus = require('./parsers/order-to-bling/status')
 const handleJob = require('./handle-job')
 
 module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const orderId = queueEntry.nextId
+  const { client_id, client_secret, code } = appData
   return appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
     .then(({ response }) => {
       const order = response.data
@@ -32,7 +33,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
           hasCreatedBlingOrder = Boolean(blingOrderNumber)
         }
       }
-      const bling = new Bling(blingToken)
+      const bling = new Bling(client_id, client_secret, code, storeId)
       const job = bling.get(`/pedido/${(blingOrderNumber || order.number)}`)
         .catch(err => {
           if (err.response && err.response.status === 404) {

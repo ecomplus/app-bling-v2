@@ -1,11 +1,12 @@
 const { firestore } = require('firebase-admin')
 const ecomClient = require('@ecomplus/client')
-const Bling = require('../bling/constructor')
+const Bling = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-ecomplus')
 const handleJob = require('./handle-job')
 
 module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
   const [sku, productId] = String(queueEntry.nextId).split(';:')
+  const { client_id, client_secret, code } = appData
   let blingProductCode = sku
 
   return new Promise((resolve, reject) => {
@@ -120,7 +121,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
             return payload
           }
           const { product, variationId, hasVariations } = payload
-          const bling = new Bling(blingToken)
+          const bling = new Bling(client_id, client_secret, code, storeId)
 
           if (!product && (isHiddenQueue || productId) && !appData.import_product) {
             dispatchNullJob()
