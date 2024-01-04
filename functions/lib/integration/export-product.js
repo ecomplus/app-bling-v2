@@ -15,11 +15,16 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
 
     .then(({ data }) => {
       const product = data
-      let blingProductCode, originalBlingProduct
-      if (product.metafields) {
-        const metafield = product.metafields.find(({ field }) => field === 'bling:codigo')
-        if (metafield) {
-          blingProductCode = metafield.value
+      let blingProductCode, originalBlingProduct, blingProductId
+      let { metafields } = product
+      if (metafields) {
+        const metafieldCodigo = metafields.find(({ field }) => field === 'bling:codigo')
+        const metafieldId = metafields.find(({ field }) => field === 'bling:id')
+        if (metafieldCodigo) {
+          blingProductCode = metafieldCodigo.value
+        }
+        if (metafieldId) {
+          blingProductId = metafieldId.value
         }
       }
       if (!blingProductCode) {
@@ -27,25 +32,23 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
       }
       const bling = new Bling(client_id, client_secret, code, storeId)
 
-      const job = bling.get(`/produto/${blingProductCode}`, {
+      const job = bling.get(`/produtos`, {
         params: {
-          estoque: 'S',
-          loja: blingStore
+          codigo: blingProductCode,
+          idLoja: blingStore
         }
       })
         .catch(err => {
           if (err.response && err.response.status === 404) {
-            return { data: {} }
+            return { data: [] }
           }
           throw err
         })
 
         .then(({ data }) => {
-          if (Array.isArray(data.produtos)) {
-            originalBlingProduct = data.produtos.find(({ produto }) => product.sku === String(produto.codigo))
-            if (originalBlingProduct) {
-              originalBlingProduct = originalBlingProduct.produto
-            } else if (!canCreateNew) {
+          if (Array.isArray(data)) {
+            originalBlingProduct = data.find(({ codigo }) => product.sku === String(codigo))
+            if (!canCreateNew && !originalBlingProduct) {
               return null
             }
           }
@@ -53,10 +56,9 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
             const blingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
             if (blingProduct) {
               const data = { produto: blingProduct }
-              let endpoint = originalBlingProduct ? `/produto/${blingProductCode}` : '/produto'
-              if (storeId === 1445) {
-                console.log('Produto export #1445', JSON.stringify(data))
-                endpoint = '/produto'
+              let endpoint = originalBlingProduct ? `/produtos/${blingProductId}` : '/produtos'
+              if (originalBlingProduct) {
+                return bling.put(endpoint, data)
               }
               return bling.post(endpoint, data)
             }
@@ -65,39 +67,29 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
         })
 
         .then(response => {
-          if (blingStore && (canCreateNew || appData.export_price)) {
-            const promises = []
-            const linkBlingProduct = (codigo, idLojaVirtual) => {
-              const method = originalBlingProduct && originalBlingProduct.produtoLoja ? 'put' : 'post'
-              const data = {
-                produtosLoja: {
-                  produtoLoja: { idLojaVirtual }
-                }
+          if (!blingProductId) {
+            const responseData = response.data && response.data.data
+            if (responseData) {
+              if (!metafields) {
+                metafields = []
               }
-              data.produtosLoja.produtoLoja.preco = {
-                preco: ecomUtils.onPromotion(product) ? product.base_price : ecomUtils.price(product),
-                precoPromocional: ecomUtils.price(product)
-              }
-              const endpoint = `/produtoLoja/${blingStore}/${codigo}`
-              const promise = bling[method](endpoint, data)
-              if (method === 'put') {
-                promise.catch(err => {
-                  if (err.response && err.response.status === 404) {
-                    return bling.post(endpoint, data)
-                  }
-                  throw err
-                })
-              }
-              promises.push(promise)
-            }
-
-            linkBlingProduct(blingProductCode, product._id)
-            if (product.variations) {
-              product.variations.forEach(({ _id, sku }, i) => {
-                linkBlingProduct(sku || `${blingProductCode}-${(i + 1)}`, `${product._id}/${_id}`)
+              metafields.push({
+                _id: ecomUtils.randomObjectId(),
+                namespace: 'bling',
+                field: 'bling:id',
+                value: String(blingOrderNumber)
               })
+              metafields.push({
+                _id: ecomUtils.randomObjectId(),
+                namespace: 'bling',
+                field: 'bling:codigo',
+                value: String(responseData.id)
+              })
+              appSdk.apiRequest(storeId, `/products/${productId}.json`, 'PATCH', {
+                metafields
+              }, auth)
+                .catch(console.error)
             }
-            return Promise.all(promises).then(([response]) => response)
           }
           return response
         })
