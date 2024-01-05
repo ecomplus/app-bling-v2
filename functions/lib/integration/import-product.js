@@ -206,17 +206,21 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
           if (blingStockUpdate && isHiddenQueue && !appData.update_product_auto && !appData.import_product) {
             job = handleBlingStock(blingStockUpdate, true)
           } else {
-            job = bling.get(`/produto/${blingProductCode}`, {
+            job = bling.get('/produtos', {
               params: {
-                estoque: 'S',
-                imagem: 'S',
-                loja: blingStore
+                codigo: blingProductCode,
+                idLoja: blingStore
               }
             }).then(({ data }) => {
-              if (Array.isArray(data.produtos)) {
-                const blingProduct = data.produtos.find(({ produto }) => blingProductCode === String(produto.codigo))
+              if (Array.isArray(data) && data.length) {
+                const blingProduct = data.find(({ codigo }) => blingProductCode === String(codigo))
                 if (blingProduct) {
-                  return handleBlingStock(blingProduct.produto)
+                  return bling.get(`/produtos/${blingProduct.id}`).then((res) => {
+                    const blingData = res.data && res.data.data
+                    if (blingData) {
+                      return handleBlingStock(blingData)
+                    }
+                  })
                 }
               }
               const msg = `SKU ${sku} não encontrado no Bling`
