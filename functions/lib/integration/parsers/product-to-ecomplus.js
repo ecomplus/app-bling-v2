@@ -147,7 +147,7 @@ const tryImageUpload = (storeId, auth, originImgUrl, product) => new Promise(res
 
 module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData) => new Promise((resolve, reject) => {
   const sku = blingProduct.codigo
-  const name = (blingProduct.descricao || sku).trim()
+  const name = (blingProduct.nome || sku).trim()
   const validateStock = (product) => {
     return product.estoqueAtual && product.estoqueAtual > 0 ? product.estoqueAtual : 0
   }
