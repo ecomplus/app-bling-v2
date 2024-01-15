@@ -147,10 +147,10 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
 // update token job bling
-const createAccess = require('./lib/bling-auth/create-access')
+/* const createAccess = require('./lib/bling-auth/create-access')
 const queueCreateAccess = 'every 9 mins'
 exports.scheduledSyncBlingToken = functions.pubsub.schedule(queueCreateAccess).onRun(createAccess)
-console.log(`-- Sheduled active access from bling '${queueCreateAccess}'`)
+console.log(`-- Sheduled active access from bling '${queueCreateAccess}'`) */
 
 // schedule active check queues from Store API
 const checkIdleQueues = require('./lib/integration/check-idle-queues')
