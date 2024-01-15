@@ -1,5 +1,4 @@
 const getAppData = require('./../../lib/store-api/get-app-data')
-const updateAppData = require('./../../lib/store-api/update-app-data')
 const Bling = require('../../lib/bling-auth/create-access')
 
 exports.post = async ({ appSdk, admin }, req, res) => {
@@ -18,15 +17,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
               const bling = new Bling(client_id, client_secret, code, storeId)
-              bling.preparing
-                .then((e) => {
-                  console.log('deu certo a criação de autenticação')
-                  res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-                })
-                .catch(err => {
-                  console.log(err)
-                  res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-                })
+              setTimeout(() => {
+                res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+              }, 2000)
             })
         } catch (error) {
           console.error(error)
@@ -79,15 +72,9 @@ exports.get = ({ appSdk, admin }, req, res) => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
               const bling = new Bling(client_id, client_secret, code, storeId)
-              bling.preparing
-                .then((e) => {
-                  console.log('deu certo a criação de autenticação')
-                  res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-                })
-                .catch(err => {
-                  console.log(err)
-                  res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-                })
+              setTimeout(() => {
+                res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+              }, 2000)
             })
           res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
         } catch (error) {
