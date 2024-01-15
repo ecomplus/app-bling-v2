@@ -3,7 +3,7 @@ const auth = require('./create-auth')
 const { getFirestore } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
-module.exports = async function (clientId, clientSecret, code, storeId) {
+module.exports = function (clientId, clientSecret, code, storeId) {
   const self = this
 
   let documentRef
@@ -14,7 +14,7 @@ module.exports = async function (clientId, clientSecret, code, storeId) {
   } else if (firestoreColl) {
     const db = getFirestore()
     const d = new Date(new Date().getTime() - 9000)
-    const documentSnapshot = await db.collection(firestoreColl)
+    const documentSnapshot = db.collection(firestoreColl)
       .where('updatedAt', '<=', d)
       .orderBy('updatedAt')
       .limit(1)
