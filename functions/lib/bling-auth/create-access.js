@@ -41,8 +41,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       console.log('> Bling Auth02 ', storeId)
       auth(clientId, clientSecret, code, storeId, refreshToken)
         .then((data) => {
-          console.log('> Bling token => ', data)
-          authenticate(data.access_token)
+          console.log('> Bling token => ', JSON.stringify(data), documentRef)
           if (!documentRef) {
             documentRef = require('firebase-admin')
             .firestore()
@@ -57,6 +56,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
               updatedAt: Timestamp.now()
             }).catch(console.error)
           }
+          authenticate(data.access_token)
         })
         .catch(reject)
     }
