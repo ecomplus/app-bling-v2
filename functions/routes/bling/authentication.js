@@ -1,7 +1,8 @@
 const getAppData = require('./../../lib/store-api/get-app-data')
 const updateAppData = require('./../../lib/store-api/update-app-data')
+const Bling = require('../../lib/bling-auth/create-access')
 
-exports.post = ({ appSdk, admin }, req, res) => {
+exports.post = async ({ appSdk, admin }, req, res) => {
   console.log('>> POST  BLING')
   const { body, query } = req
   const { state, code } = query
@@ -12,10 +13,14 @@ exports.post = ({ appSdk, admin }, req, res) => {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
         try {
-          await updateAppData({ appSdk, storeId, auth }, {
-            code
-          })
-          res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+          getAppData({ appSdk, storeId, auth })
+            .then(appData => {
+              const { client_id, client_secret } = appData
+              const bling = new Bling(client_id, client_secret, code, storeId)
+              setTimeout(() => {
+                res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+              }, 1000)
+            })
         } catch (error) {
           console.error(error)
           const { response, config } = error
