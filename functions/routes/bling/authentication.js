@@ -5,6 +5,7 @@ exports.post = ({ appSdk, admin }, req, res) => {
   console.log('>> POST  BLING')
   const { body, query } = req
   const { state, code } = query
+  console.log('Query', JSON.stringify(query))
   const storeId = parseInt(query.storeId, 10)
   console.log('>> Store: ', storeId, ' code: ', code, 'aplicativo', state, '<<')
   if (storeId > 100 && code) {
@@ -54,8 +55,9 @@ exports.get = ({ appSdk, admin }, req, res) => {
   console.log('>> POST  BLING')
   const { body, query } = req
   const { state, code } = query
-  const storeId = parseInt(state, 10)
-  console.log('>> Store: ', storeId, ' code: ', code, ' <<')
+  console.log('Query', JSON.stringify(query))
+  const storeId = parseInt(query.storeId, 10)
+  console.log('>> Store: ', storeId, ' code: ', code, 'aplicativo', state, '<<')
   if (storeId > 100 && code) {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
