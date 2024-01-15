@@ -2,7 +2,7 @@ const url = require('url')
 
 module.exports = (client_id, client_secret, code, storeId, refresh_token) => new Promise((resolve, reject) => {
   //  https://developer.bling.com.br/aplicativos#fluxo-de-autoriza%C3%A7%C3%A3o
-  const axios = require('./create-axios')(null)
+  const axios = require('./create-axios')(undefined, client_id, client_secret)
   const request = isRetry => {
     const path = '/oauth/token'
     console.log(`>> Create Auth path:${storeId}: ${path} - ${refresh_token}`)

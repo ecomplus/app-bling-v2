@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-module.exports = (clientId, clientSecret, accessToken) => {
+module.exports = (accessToken, clientId, clientSecret) => {
   let headers = {
     Accept: '1.0'
   }
