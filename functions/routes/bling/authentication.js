@@ -13,12 +13,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
         try {
-          return getAppData({ appSdk, storeId, auth })
+          getAppData({ appSdk, storeId, auth })
             .then(appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
               const bling = new Bling(client_id, client_secret, code, storeId)
-              return bling.preparing
+              bling.preparing
                 .then((e) => {
                   console.log('deu certo a criação de autenticação')
                   res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
