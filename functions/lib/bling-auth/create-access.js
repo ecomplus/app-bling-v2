@@ -1,6 +1,6 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-auth')
-const { getFirestore } = require('firebase-admin/firestore')
+const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
 module.exports = function (clientId, clientSecret, code, storeId) {
@@ -41,7 +41,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       console.log('> Bling Auth02 ', storeId)
       auth(clientId, clientSecret, code, storeId, refreshToken)
         .then((data) => {
-          console.log('> Bling token => ', JSON.stringify(data), documentRef)
+          console.log('> Bling token => ', JSON.stringify(data))
           if (!documentRef) {
             documentRef = require('firebase-admin')
             .firestore()
