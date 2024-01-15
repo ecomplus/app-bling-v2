@@ -47,7 +47,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           res.sendStatus(401)
         }
       })
-    res.status(200)
   } else {
     return res.send({
       status: 404,
@@ -76,7 +75,9 @@ exports.get = ({ appSdk, admin }, req, res) => {
                 res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 2000)
             })
-          res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+            if (!res.headersSent) {
+              res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+            } 
         } catch (error) {
           console.error(error)
           const { response, config } = error
@@ -103,7 +104,6 @@ exports.get = ({ appSdk, admin }, req, res) => {
           res.sendStatus(401)
         }
       })
-    res.status(200)
   } else {
     return res.send({
       status: 404,
