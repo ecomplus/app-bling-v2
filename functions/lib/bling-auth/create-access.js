@@ -35,7 +35,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       resolve(self)
     }
 
-    const handleAuth = (refreshToken) => {
+    const handleAuth = (clientId, clientSecret, code, storeId, refreshToken) => {
       console.log('> Bling Auth02 ', storeId)
       auth(clientId, clientSecret, code, storeId, refreshToken)
         .then((data) => {
@@ -62,12 +62,12 @@ module.exports = function (clientId, clientSecret, code, storeId) {
           ) {
             authenticate(documentSnapshot.get('access_token'))
           } else {
-            handleAuth(documentSnapshot.get('refresh_token'))
+            handleAuth(clientId, clientSecret, code, storeId, documentSnapshot.get('refresh_token'))
           }
         })
         .catch(console.error)
     } else {
-      handleAuth()
+      handleAuth(clientId, clientSecret, code, storeId)
     }
   })
 }

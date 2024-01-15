@@ -15,6 +15,7 @@ module.exports = (client_id, client_secret, code, storeId, refresh_token) => new
       grandType['code'] = code
     }
     const params = new url.URLSearchParams(grandType)
+    console.log('path', path, 'params', JSON.stringify(params))
     axios.post(path, params.toString())
       .then(({ data }) => resolve(data))
       .catch(err => {
