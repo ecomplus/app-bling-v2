@@ -18,7 +18,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
               const bling = new Bling(client_id, client_secret, code, storeId)
               setTimeout(() => {
-                res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+                return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 2000)
             })
         } catch (error) {
@@ -72,11 +72,11 @@ exports.get = ({ appSdk, admin }, req, res) => {
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
               const bling = new Bling(client_id, client_secret, code, storeId)
               setTimeout(() => {
-                res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+                return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 2000)
             })
             if (!res.headersSent) {
-              res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+              return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
             } 
         } catch (error) {
           console.error(error)
