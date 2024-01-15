@@ -3,7 +3,7 @@ const auth = require('./create-auth')
 const { getFirestore } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
-module.exports = function (clientId, clientSecret, code, storeId) {
+module.exports = async function (clientId, clientSecret, code, storeId) {
   const self = this
 
   let documentRef
@@ -20,15 +20,13 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       .limit(1)
       .get()
     if (!documentSnapshot.empty) {
-        logger.info(`None firestore collection`)
-        continue
-    }
-    storeId = documentSnapshot.storeId
-    clientId = documentSnapshot.clientId
-    clientSecret = documentSnapshot.clientSecret
-    documentRef = require('firebase-admin')
-      .firestore()
-      .doc(`${firestoreColl}/${storeId}`)
+      storeId = documentSnapshot.storeId
+      clientId = documentSnapshot.clientId
+      clientSecret = documentSnapshot.clientSecret
+      documentRef = require('firebase-admin')
+        .firestore()
+        .doc(`${firestoreColl}/${storeId}`)
+    } 
   }
 
   this.preparing = new Promise((resolve, reject) => {
