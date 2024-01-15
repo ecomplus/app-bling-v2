@@ -1,12 +1,31 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-auth')
+const { getFirestore } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
 module.exports = function (clientId, clientSecret, code, storeId) {
   const self = this
 
   let documentRef
-  if (firestoreColl) {
+  if (firestoreColl && storeId) {
+    documentRef = require('firebase-admin')
+      .firestore()
+      .doc(`${firestoreColl}/${storeId}`)
+  } else if (firestoreColl) {
+    const db = getFirestore()
+    const d = new Date(new Date().getTime() - 9000)
+    const documentSnapshot = await db.collection(firestoreColl)
+      .where('updatedAt', '<=', d)
+      .orderBy('updatedAt')
+      .limit(1)
+      .get()
+    if (!documentSnapshot.empty) {
+        logger.info(`None firestore collection`)
+        continue
+    }
+    storeId = documentSnapshot.storeId
+    clientId = documentSnapshot.clientId
+    clientSecret = documentSnapshot.clientSecret
     documentRef = require('firebase-admin')
       .firestore()
       .doc(`${firestoreColl}/${storeId}`)
@@ -27,7 +46,10 @@ module.exports = function (clientId, clientSecret, code, storeId) {
           if (documentRef) {
             documentRef.set({
               ...data,
-              updatedAt: new Date().toISOString()
+              storeId,
+              clientId,
+              clientSecret,
+              updatedAt: Timestamp.now()
             }).catch(console.error)
           }
         })
