@@ -147,8 +147,8 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
 // update token job bling
-const createAccess = require('./lib/bling-auth/create-access')
-const queueCreateAccess = 'every 9 mins'
+const createAccess = require('./lib/bling-auth/renovate-token')
+const queueCreateAccess = '36 */2 * * *'
 exports.scheduledSyncBlingToken = functions.pubsub.schedule(queueCreateAccess).onRun(createAccess)
 console.log(`-- Sheduled active access from bling '${queueCreateAccess}'`)
 
