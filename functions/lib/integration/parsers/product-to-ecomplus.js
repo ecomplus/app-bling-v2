@@ -148,16 +148,12 @@ const tryImageUpload = (storeId, auth, originImgUrl, product) => new Promise(res
 module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData) => new Promise((resolve, reject) => {
   const sku = blingProduct.codigo
   const name = (blingProduct.nome || sku).trim()
-  const validateStock = (product) => {
-    return product.estoqueAtual && product.estoqueAtual > 0 ? product.estoqueAtual : 0
-  }
 
   const product = {
-    available: blingProduct.situacao === 'Ativo',
+    available: blingProduct.situacao === 'A',
     sku,
     name,
-    quantity: Number(validateStock(blingProduct)),
-    cost_price: blingProduct.preco_custo
+    quantity: 0
   }
 
   const isDisableDescription = appData && appData.non_update_description
@@ -172,26 +168,23 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
     }
   }
 
-  const { produtoLoja } = blingProduct
-  if (produtoLoja && produtoLoja.preco && produtoLoja.preco.preco) {
-    if (produtoLoja.preco.precoPromocional) {
-      product.price = Number(produtoLoja.preco.precoPromocional)
-      product.base_price = Number(produtoLoja.preco.preco)
+  const { loja } = blingProduct
+  if (loja && blingProduct.preco) {
+    if (blingProduct.precoPromocional) {
+      product.price = Number(blingProduct.precoPromocional)
+      product.base_price = Number(blingProduct.preco)
     } else {
-      product.price = Number(produtoLoja.preco.preco)
+      product.price = Number(blingProduct.preco)
     }
   } else {
-    product.price = Number(blingProduct.preco || blingProduct.vlr_unit)
+    product.price = Number(blingProduct.preco)
   }
 
-  if (blingProduct.garantia) {
-    product.warranty = String(blingProduct.garantia)
-  }
   if (blingProduct.itensPorCaixa) {
     product.min_quantity = Number(blingProduct.itensPorCaixa)
   }
-  if (blingProduct.class_fiscal) {
-    product.mpn = [blingProduct.class_fiscal]
+  if (blingProduct.tributacao && blingProduct.tributacao.ncm) {
+    product.mpn = [blingProduct.tributacao.ncm]
   }
   const validateGtin = gtin => typeof gtin === 'string' && /^([0-9]{8}|[0-9]{12,14})$/.test(gtin)
   if (validateGtin(blingProduct.gtin)) {
@@ -205,9 +198,12 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
     product.slug = removeAccents(name.toLowerCase())
       .replace(/\s+/g, '-')
       .replace(/[^a-z0-9-_./]/g, '')
-    if (!/[a-z0-9]/.test(product.slug.charAt(0))) {
-      product.slug = `p-${product.slug}`
-    }
+  }
+
+  if (blingProduct.media && blingProduct.media.video && blingProduct.media.video.url) {
+    product.videos = [{
+      url: blingProduct.media.video.url
+    }]
   }
 
   const weight = parseFloat(blingProduct.pesoBruto || blingProduct.pesoLiq)
@@ -223,7 +219,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
     ['altura', 'height'],
     ['profundidade', 'length']
   ].forEach(([lado, side]) => {
-    const dimension = parseFloat(blingProduct[`${lado}Produto`])
+    const dimension = parseFloat(blingProduct.dimensoes && blingProduct.dimensoes[lado])
     if (dimension > 0) {
       if (!product.dimensions) {
         product.dimensions = {}
@@ -238,16 +234,16 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
   if (Array.isArray(blingProduct.variacoes) && blingProduct.variacoes.length) {
     product.variations = variations || []
     blingProduct.variacoes.forEach(({ variacao }) => {
-      if (variacao.nome) {
-        const gridsAndValues = variacao.nome.split(';')
+      if (variacao.variacao && variacao.variacao.nome) {
+        const gridsAndValues = variacao.variacao.nome.split(';')
         if (gridsAndValues.length) {
           const specifications = {}
           const specTexts = []
-
           gridsAndValues.forEach(gridAndValue => {
             const [gridName, text] = gridAndValue.trim().split(':')
             if (gridName && text) {
-              const gridId = gridName === 'Cor'
+
+              const gridId = gridName.toLowerCase() === 'cor'
                 ? 'colors'
                 : removeAccents(gridName.toLowerCase())
                   .replace(/\s+/g, '_')
@@ -286,10 +282,44 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
             variation.name = `${name} / ${specTexts.join(' / ')}`.substring(0, 100)
             variation.sku = variacao.codigo
             variation.specifications = specifications
-            variation.quantity = Number(validateStock(variacao))
-            const price = parseFloat(variacao.preco || variacao.vlr_unit)
+            variation.quantity = 0
+            const price = parseFloat(variacao.preco)
             if (price) {
               variation.price = price
+            }
+            if (validateGtin(variacao.gtin)) {
+              variacao.gtin = [variacao.gtin]
+              if (validateGtin(variacao.gtinEmbalagem)) {
+                variacao.gtin.push(variacao.gtinEmbalagem)
+              }
+            }
+            if (variacao.dimensoes && variacao.dimensoes.largura) {
+              ;[
+                ['largura', 'width'],
+                ['altura', 'height'],
+                ['profundidade', 'length']
+              ].forEach(([lado, side]) => {
+                const dimensionVariation = parseFloat(variacao.dimensoes && variacao.dimensoes[lado])
+                if (dimensionVariation > 0) {
+                  if (!variation.dimensions) {
+                    variation.dimensions = {}
+                  }
+                  variation.dimensions[side] = {
+                    unit: 'cm',
+                    value: dimensionVariation
+                  }
+                }
+              })
+            }
+            const weightVariation = parseFloat(variacao.pesoBruto || variacao.pesoLiq)
+            if (weightVariation > 0) {
+              variation.weight = {
+                unit: 'kg',
+                value: weightVariation
+              }
+            }
+            if (variacao.tributacao && variacao.tributacao.ncm) {
+              variation.mpn = [variacao.tributacao.ncm]
             }
           }
         }
@@ -297,12 +327,12 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
     })
   }
 
-  if (isNew && Array.isArray(blingProduct.imagem) && blingProduct.imagem.length) {
+  if (isNew && blingProduct.midia && blingProduct.midia.imagens && Array.isArray(blingProduct.midia.imagens.externas) && blingProduct.midia.imagens.externas.length) {
     if (!product.pictures) {
       product.pictures = []
     }
     const promises = []
-    blingProduct.imagem.forEach(({ link }) => {
+    blingProduct.midia.imagens.externas.forEach(({ link }) => {
       if (typeof link === 'string' && link.startsWith('http')) {
         promises.push(tryImageUpload(storeId, auth, link, product))
       }

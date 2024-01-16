@@ -213,6 +213,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
                 if (blingProduct) {
                   return bling.get(`/produtos/${blingProduct.id}`).then((res) => {
                     const blingData = res.data && res.data.data
+                    console.log(blingData)
                     if (blingData) {
                       return handleBlingStock(blingData)
                     }
