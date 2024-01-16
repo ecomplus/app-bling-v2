@@ -4,7 +4,7 @@ const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 const firestoreColl = 'bling_tokens'
 module.exports = async () => {
 
-  let documentRef, storeId, clientId, clientSecret, refreshToken
+  let documentRef
   if (firestoreColl) {
     const db = getFirestore()
     const d = new Date(new Date().getTime() - 9000)
@@ -13,11 +13,8 @@ module.exports = async () => {
       .orderBy('updatedAt')
       .limit(1)
       .get()
-    storeId = documentSnapshot.storeId
-    clientId = documentSnapshot.clientId
-    clientSecret = documentSnapshot.clientSecret
-    refreshToken = documentSnapshot.refreshToken
-    console.log('doc snap shot', documentSnapshot)
+
+    let { storeId, clientId, clientSecret, refreshToken } = documentSnapshot.data()
     console.log('store id', storeId)
     console.log('client id', clientId)
     console.log('client secret', clientSecret)
