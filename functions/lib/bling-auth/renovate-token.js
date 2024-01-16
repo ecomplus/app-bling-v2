@@ -13,8 +13,8 @@ module.exports = async () => {
       .orderBy('updatedAt')
       .limit(1)
       .get()
-
-    let { storeId, clientId, clientSecret, refreshToken } = documentSnapshot.data()
+    console.log('get docs', documentSnapshot.docs && documentSnapshot.docs.length)
+    let { storeId, clientId, clientSecret, refreshToken } = documentSnapshot.docs && documentSnapshot.docs.data()
     console.log('store id', storeId)
     console.log('client id', clientId)
     console.log('client secret', clientSecret)
