@@ -13,16 +13,11 @@ module.exports = async () => {
       .orderBy('updatedAt')
       .limit(1)
       .get()
-    console.log('get docs', documentSnapshot.docs && documentSnapshot.docs.length)
     const info = documentSnapshot.docs && documentSnapshot.docs[0] && documentSnapshot.docs[0].data()
     storeId = info.storeId
     clientId = info.clientId
     clientSecret = info.clientSecret
     refreshToken = info.refresh_token
-    console.log('store id', storeId)
-    console.log('client id', clientId)
-    console.log('client secret', clientSecret)
-    console.log('refresh token', refreshToken)
     documentRef = require('firebase-admin')
         .firestore()
         .doc(`${firestoreColl}/${storeId}`)
@@ -34,7 +29,7 @@ module.exports = async () => {
       .then((data) => {
         console.log('> Bling token => ', JSON.stringify(data))
         if (documentRef) {
-          documentRef.set({
+          return documentRef.set({
             ...data,
             storeId,
             clientId,
@@ -52,7 +47,7 @@ module.exports = async () => {
         if (documentSnapshot.exists &&
           Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 10000 // token expires in 21600 ms
         ) {
-          authenticate(documentSnapshot.get('access_token'))
+          return
         } else {
           handleAuth(clientId, clientSecret, code = undefined, storeId, documentSnapshot.get('refresh_token'))
         }

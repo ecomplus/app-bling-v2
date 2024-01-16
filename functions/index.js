@@ -148,7 +148,7 @@ console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
 // update token job bling
 const createAccess = require('./lib/bling-auth/renovate-token')
-const queueCreateAccess = 'every 10 mins' //'36 */2 * * *' 'every 30 mins'
+const queueCreateAccess = '36 */2 * * *'
 exports.scheduledSyncBlingToken = functions.pubsub.schedule(queueCreateAccess).onRun(createAccess)
 console.log(`-- Sheduled active access from bling '${queueCreateAccess}'`)
 
