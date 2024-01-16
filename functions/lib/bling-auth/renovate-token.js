@@ -14,7 +14,7 @@ module.exports = async () => {
       .limit(1)
       .get()
     console.log('get docs', documentSnapshot.docs && documentSnapshot.docs.length)
-    let { storeId, clientId, clientSecret, refreshToken } = documentSnapshot.docs && documentSnapshot.docs.data()
+    let { storeId, clientId, clientSecret, refreshToken } = documentSnapshot.docs && documentSnapshot.docs[0] && documentSnapshot.docs[0].data()
     console.log('store id', storeId)
     console.log('client id', clientId)
     console.log('client secret', clientSecret)
