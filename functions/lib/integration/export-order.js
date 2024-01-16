@@ -6,10 +6,11 @@ const Bling = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-bling/')
 const parseStatus = require('./parsers/order-to-bling/status')
 const handleJob = require('./handle-job')
+const url = require('url')
 
 module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const orderId = queueEntry.nextId
-  const { client_id, client_secret, code } = appData
+  const { client_id, client_secret, code, bling_store } = appData
   return appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
     .then(({ response }) => {
       const order = response.data
@@ -33,28 +34,32 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
           hasCreatedBlingOrder = Boolean(blingOrderNumber)
         }
       }
+      const urlParams = {
+        number: order.number,
+        idLoja: bling_store || blingStore
+      }
+      const params = new url.URLSearchParams(urlParams)
       const bling = new Bling(client_id, client_secret, code, storeId)
-      const job = bling.get(`/pedido/${(blingOrderNumber || order.number)}`)
+      const job = bling.get(`/pedidos/vendas/${hasCreatedBlingOrder ? (blingOrderNumber) : `?${params.toString()}`}`)
         .catch(err => {
           if (err.response && err.response.status === 404) {
             return { data: {} }
           }
           throw err
         })
-
         .then(({ data }) => {
           const blingStatus = parseStatus(order)
-          const hasFoundByNumber = Boolean(Array.isArray(data.pedidos) && data.pedidos.length)
+          const hasFoundByNumber = Boolean(Array.isArray(data) && data.length)
           let originalBlingOrder
           if (hasFoundByNumber) {
-            originalBlingOrder = data.pedidos.find(({ pedido }) => {
-              if (String(order.number) === pedido.numeroPedidoLoja) {
-                return !blingStore || (String(blingStore) === String(pedido.loja))
+            originalBlingOrder = data.find(( pedido ) => {
+              if (String(order.number) === pedido.numeroLoja) {
+                return !blingStore || (String(blingStore) === String(pedido.loja && pedido.loja.id))
               }
               return false
             })
             if (!originalBlingOrder && blingOrderNumber) {
-              originalBlingOrder = data.pedidos.find(({ pedido }) => {
+              originalBlingOrder = data.find((pedido) => {
                 return blingOrderNumber === String(pedido.numero)
               })
             }
