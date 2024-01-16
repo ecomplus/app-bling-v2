@@ -30,7 +30,7 @@ module.exports = async () => {
 
   const handleAuth = (clientId, clientSecret, code = undefined, storeId, refreshToken) => {
     console.log('> Bling Auth02 ', storeId)
-    auth(clientId, clientSecret, code, storeId, refreshToken)
+    return auth(clientId, clientSecret, code, storeId, refreshToken)
       .then((data) => {
         console.log('> Bling token => ', JSON.stringify(data))
         if (documentRef) {
@@ -42,7 +42,6 @@ module.exports = async () => {
             updatedAt: Timestamp.now()
           }).catch(console.error)
         }
-        authenticate(data.access_token)
       })
       .catch(reject)
   }
