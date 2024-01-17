@@ -5,7 +5,6 @@ exports.get = ({ appSdk, admin }, req, res) => {
   const { storeId } = req
   const blingClientId = req.query.clientId
   const blingStore = req.query.bling_store
-  const storeId = req.query.storeId
   const blingOffsetPage = parseInt(req.query.bling_offset_page, 10) || 1
 
   if (typeof blingToken === 'string' && blingToken) {
