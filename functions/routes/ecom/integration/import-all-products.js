@@ -1,14 +1,15 @@
 const updateAppData = require('../../../lib/store-api/update-app-data')
-const Bling = require('../../../lib/bling/constructor')
+const Bling = require('../../../lib/bling-auth/create-access.js')
 
 exports.get = ({ appSdk, admin }, req, res) => {
   const { storeId } = req
-  const blingToken = req.query.bling_token
+  const blingClientId = req.query.clientId
   const blingStore = req.query.bling_store
+  const storeId = req.query.storeId
   const blingOffsetPage = parseInt(req.query.bling_offset_page, 10) || 1
 
   if (typeof blingToken === 'string' && blingToken) {
-    const bling = new Bling(blingToken)
+    const bling = new Bling(blingClientId, undefined, undefined, storeId)
     let countBlingReqs = 0
     const skus = []
 
