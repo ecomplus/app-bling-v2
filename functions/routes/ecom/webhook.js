@@ -29,7 +29,7 @@ const removeFromQueue = (resourceId) => {
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
   const { storeId } = req
-
+  console.log('acionando webhook', storeId)
   if (req.get('host') && !baseUri.includes(req.get('host'))) {
     console.log('>>> Proxy to function v2')
     const axios = require('axios')
