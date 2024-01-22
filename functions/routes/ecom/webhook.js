@@ -29,7 +29,8 @@ const removeFromQueue = (resourceId) => {
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
   const { storeId } = req
-  console.log('acionando webhook', storeId, JSON.stringify(req.body))
+  
+  
   if (req.get('host') && !baseUri.includes(req.get('host'))) {
     console.log('>>> Proxy to function v2')
     const axios = require('axios')
@@ -60,6 +61,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
    */
   const trigger = req.body
   const resourceId = trigger.resource_id || trigger.inserted_id
+  if (trigger.resource === 'applications') {
+    console.log('acionando webhook', storeId, JSON.stringify(req.body))
+  }
   // get app configured options
   if (!handlingIds.includes(resourceId)) {
     handlingIds.push(resourceId)
