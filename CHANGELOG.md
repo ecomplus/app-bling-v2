@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## 1.0.0 (2024-01-22)
+
+
+### Features
+
+* **authentication:** set authentication route ([f98603c](https://github.com/ecomplus/application-starter/commit/f98603caa6ae6fd45fcc39ff7e51656b0e8032bf))
+* **categories:** set functions categories ([13fd8de](https://github.com/ecomplus/application-starter/commit/13fd8debfcbe1841a54132582f0d305089a3be28))
+* **customers:** set functions customers ([921a08e](https://github.com/ecomplus/application-starter/commit/921a08ed389742b56a789a2aff6e3fe2e3ebb2d2))
+* **ecom-config:** set config app options ([1c40766](https://github.com/ecomplus/application-starter/commit/1c407665f74c3a122c22892d5d7b2bd68f0800f8))
+* import last version https://github.com/ecomplus/app-bling-erp/commit/fa74b499f7a81879e56084184b8b2089eed09515 ([4939fce](https://github.com/ecomplus/application-starter/commit/4939fcee332193a847fcc32be517e43a6e84d715))
+* **payment-method:** set functions get and post payment method ([4105ae6](https://github.com/ecomplus/application-starter/commit/4105ae63e23d8980996c830792b3b8a770f65898))
+* **products:** set all routes from products ([19a2312](https://github.com/ecomplus/application-starter/commit/19a231203eb42bcbbfa57b00c742985548a59b8b))
+
+
+### Bug Fixes
+
+* **authentication:** avoid using return ([ddbc96e](https://github.com/ecomplus/application-starter/commit/ddbc96ee3ee426171f37b2300cc783f863ea96e1))
+* **create-access:** fix auth params ([8a67675](https://github.com/ecomplus/application-starter/commit/8a67675b336db3d735e662bdfa99575aa2fb56e5))
+* **create-access:** remove async to be constructor ([4dbf575](https://github.com/ecomplus/application-starter/commit/4dbf575a943f119914a3cab2423e5911884adf23))
+* **create-access:** replace constructor by oauth axios ([7ab05b2](https://github.com/ecomplus/application-starter/commit/7ab05b26e38fa0c97851e0bcc8a2396bf1279aa0))
+* **create-axios:** create axios with two types of sending ([9b2ece4](https://github.com/ecomplus/application-starter/commit/9b2ece4e0ffec202deb9c64ed685621e24ae9b81))
+* **import-all:** avoid duplicate variable ([f868a7e](https://github.com/ecomplus/application-starter/commit/f868a7e6adc99f3c77850c774d0a6af99567e2a2))
+* webhoot route function ([1c7834d](https://github.com/ecomplus/application-starter/commit/1c7834d399bd8a60fc35c6f0681515adb2beca66))
+
 ## [1.0.0-starter.26](https://github.com/ecomplus/application-starter/compare/v1.0.0-starter.25...v1.0.0-starter.26) (2022-02-24)
 
 ## [1.0.0-starter.25](https://github.com/ecomplus/application-starter/compare/v1.0.0-starter.24...v1.0.0-starter.25) (2022-02-24)
