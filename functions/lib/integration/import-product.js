@@ -4,7 +4,7 @@ const Bling = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-ecomplus')
 const handleJob = require('./handle-job')
 
-module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
+module.exports = ({ appSdk, storeId, auth }, blingClientId, blingClientSecret, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
   const [sku, productId] = String(queueEntry.nextId).split(';:')
   const { client_id, client_secret, code } = appData
   let blingProductCode = sku
@@ -16,7 +16,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
     }
 
     firestore().collection('bling_stock_updates')
-      .where('ref', '==', `${storeId}_${blingToken}_${sku}`)
+      .where('ref', '==', `${storeId}_${blingClientId}_${sku}`)
       .get()
       .then(querySnapshot => {
         let blingStockUpdate, lastUpdateTime

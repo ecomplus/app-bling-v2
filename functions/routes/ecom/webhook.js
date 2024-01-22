@@ -82,13 +82,11 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             /* DO YOUR CUSTOM STUFF HERE */
             console.log(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
 
-            const blingToken = appData.bling_api_token
+            const blingClientId = appData.client_id
+            const blingClientSecret = appData.client_secret
             const blingStore = appData.bling_store
             const blingDeposit = appData.bling_deposit
-            if (storeId === 51292 && trigger.resource === 'orders') {
-              console.log('Try to export order #51292 with token', typeof blingToken === 'string' && blingToken)
-            }
-            if (typeof blingToken === 'string' && blingToken) {
+            if (typeof blingClientId === 'string' && blingClientId) {
               let integrationConfig
               let canCreateNew = false
 
@@ -98,10 +96,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               } else if (trigger.authentication_id !== auth.myId) {
                 switch (trigger.resource) {
                   case 'orders':
-                    if (storeId === 51292) {
-                      console.log('Try to export order #51292', resourceId)
-                    }
-                    if (trigger.body) {
+                    if (false) {
                       canCreateNew = appData.new_orders ? undefined : false
                       integrationConfig = {
                         _exportation: {
@@ -112,7 +107,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     break
 
                   case 'products':
-                    if (trigger.body) {
+                    if (false) {
                       if (trigger.action === 'create') {
                         if (!appData.new_products) {
                           break
@@ -166,7 +161,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           // eslint-disable-next-line promise/no-nesting
                           return handler(
                             { appSdk, storeId, auth },
-                            blingToken,
+                            blingClientId,
+                            blingClientSecret,
                             blingStore,
                             blingDeposit,
                             queueEntry,
