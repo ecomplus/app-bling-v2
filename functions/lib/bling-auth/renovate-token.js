@@ -38,7 +38,6 @@ module.exports = async () => {
           }).catch(console.error)
         }
       })
-      .catch(reject)
   }
 
   if (documentRef) {
