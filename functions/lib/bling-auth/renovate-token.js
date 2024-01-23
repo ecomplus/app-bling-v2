@@ -4,24 +4,8 @@ const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 const firestoreColl = 'bling_tokens'
 module.exports = async () => {
 
-  let documentRef, storeId, clientId, clientSecret, refreshToken
-  if (firestoreColl) {
-    const db = getFirestore()
-    const d = new Date(new Date().getTime() - 9000)
-    const documentSnapshot = await db.collection(firestoreColl)
-      .where('updatedAt', '<=', d)
-      .orderBy('updatedAt')
-      .limit(1)
-      .get()
-    const info = documentSnapshot.docs && documentSnapshot.docs[0] && documentSnapshot.docs[0].data()
-    storeId = info.storeId
-    clientId = info.clientId
-    clientSecret = info.clientSecret
-    refreshToken = info.refresh_token
-    documentRef = require('firebase-admin')
-        .firestore()
-        .doc(`${firestoreColl}/${storeId}`)
-  }
+  const maxDocs = 15
+  const now = Timestamp.now().toMillis()
 
   const handleAuth = (clientId, clientSecret, code = undefined, storeId, refreshToken) => {
     console.log('> Bling Auth02 ', storeId)
@@ -34,26 +18,48 @@ module.exports = async () => {
             storeId,
             clientId,
             clientSecret,
-            updatedAt: Timestamp.now()
+            updatedAt: Timestamp.fromMillis(now),
+            expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000))
           }).catch(console.error)
         }
       })
   }
 
-  if (documentRef) {
-    documentRef.get()
-      .then((documentSnapshot) => {
-        if (documentSnapshot.exists &&
-          Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 10000 // token expires in 21600 ms
-        ) {
-          return
-        } else {
-          handleAuth(clientId, clientSecret, code = undefined, storeId, documentSnapshot.get('refresh_token'))
+  if (firestoreColl) {
+    const db = getFirestore()
+    const d = new Date(new Date().getTime() + 7200000)
+    const documentSnapshot = await db.collection(firestoreColl)
+      .where('expiredAt', '<=', d)
+      .orderBy('expiredAt')
+      .get()
+    const { docs } = documentSnapshot
+    const maxExistedDocs = docs && docs.length > maxDocs 
+      ? maxDocs
+      : (docs && docs.length) || 0
+    console.log(`There is ${docs && docs.length} docs expiring in two hours`)
+    if (maxExistedDocs) {
+      for (let i = 0; i < maxExistedDocs; i++) {
+        const doc = docs[i].data();
+        const { storeId, clientId, clientSecret, refreshToken, expiredAt } = doc
+        if (storeId) {
+          const documentRef = require('firebase-admin')
+            .firestore()
+            .doc(`${firestoreColl}/${storeId}`)
+            if (documentRef) {
+              documentRef.get()
+                .then((documentSnapshot) => {
+                  const hasToCreateOauth = (documentSnapshot.exists &&
+                    (now + 1000 * 60 * 60 * 2 + 1000 * 60 * 10 < expiredAt.toMillis()))
+                  if (!hasToCreateOauth) {
+                    handleAuth(clientId, clientSecret, code = undefined, storeId, documentSnapshot.get('refresh_token'))
+                  }
+                })
+            } else {
+              handleAuth(clientId, clientSecret, code, storeId)
+            }
         }
-      })
-      .catch(console.error)
-  } else {
-    handleAuth(clientId, clientSecret, code, storeId)
+      }
+    }
   }
 }
 
