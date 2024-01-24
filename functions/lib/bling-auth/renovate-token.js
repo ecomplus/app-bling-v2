@@ -29,8 +29,8 @@ module.exports = async () => {
     const db = getFirestore()
     const d = new Date(new Date().getTime() + 7200000)
     const documentSnapshot = await db.collection(firestoreColl)
-      .where('expiredAt', '<=', d)
-      .orderBy('expiredAt')
+      .where('updatedAt', '<=', d)
+      .orderBy('updatedAt')
       .get()
     const { docs } = documentSnapshot
     const maxExistedDocs = docs && docs.length > maxDocs 

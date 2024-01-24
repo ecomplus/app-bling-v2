@@ -53,6 +53,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
               storeId,
               clientId,
               clientSecret,
+              expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000)),
               updatedAt: Timestamp.now()
             }).catch(console.error)
           }
