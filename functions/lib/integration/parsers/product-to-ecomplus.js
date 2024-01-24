@@ -266,6 +266,14 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
           })
 
           if (specTexts.length) {
+            const { midia, codigo, preco, gtin, gtinEmbalagem, dimensoes, pesoBruto, pesoLiq, tributacao } = variacao
+            let pictureId = 0
+            if (midia && midia.imagens && Array.isArray(midia.imagens.externas) && midia.imagens.externas.length) {
+              pictureId = midia.imagens.externas.length
+              midia.imagens.externas.forEach(({link}) => blingProduct.midia.imagens.externas.push({
+                link
+              }))
+            }
             let variation
             if (variations) {
               const variationIndex = variations.findIndex(({ sku }) => sku === variacao.codigo)
@@ -280,26 +288,29 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
               product.variations.push(variation)
             }
             variation.name = `${name} / ${specTexts.join(' / ')}`.substring(0, 100)
-            variation.sku = variacao.codigo
+            variation.sku = codigo
             variation.specifications = specifications
             variation.quantity = 0
-            const price = parseFloat(variacao.preco)
+            if (pictureId > 0) {
+              variation.pictureId = pictureId
+            }
+            const price = parseFloat(preco)
             if (price) {
               variation.price = price
             }
-            if (validateGtin(variacao.gtin)) {
-              variacao.gtin = [variacao.gtin]
-              if (validateGtin(variacao.gtinEmbalagem)) {
-                variacao.gtin.push(variacao.gtinEmbalagem)
+            if (validateGtin(gtin)) {
+              variacao.gtin = [gtin]
+              if (validateGtin(gtinEmbalagem)) {
+                variacao.gtin.push(gtinEmbalagem)
               }
             }
-            if (variacao.dimensoes && variacao.dimensoes.largura) {
+            if (dimensoes && dimensoes.largura) {
               ;[
                 ['largura', 'width'],
                 ['altura', 'height'],
                 ['profundidade', 'length']
               ].forEach(([lado, side]) => {
-                const dimensionVariation = parseFloat(variacao.dimensoes && variacao.dimensoes[lado])
+                const dimensionVariation = parseFloat(dimensoes && dimensoes[lado])
                 if (dimensionVariation > 0) {
                   if (!variation.dimensions) {
                     variation.dimensions = {}
@@ -311,15 +322,15 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
                 }
               })
             }
-            const weightVariation = parseFloat(variacao.pesoBruto || variacao.pesoLiq)
+            const weightVariation = parseFloat(pesoBruto || pesoLiq)
             if (weightVariation > 0) {
               variation.weight = {
                 unit: 'kg',
                 value: weightVariation
               }
             }
-            if (variacao.tributacao && variacao.tributacao.ncm) {
-              variation.mpn = [variacao.tributacao.ncm]
+            if (tributacao && tributacao.ncm) {
+              variation.mpn = [tributacao.ncm]
             }
           }
         }
@@ -337,7 +348,21 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
         promises.push(tryImageUpload(storeId, auth, link, product))
       }
     })
-    return Promise.all(promises).then(() => resolve(product))
+    return Promise.all(promises).then((images) => {
+      if (Array.isArray(product.variations) && product.variations.length) {
+        product.variations.forEach(variation => {
+          if (variation.picture_id || variation.picture_id === 0) {
+            const variationImage = images[variation.picture_id]
+            if (variationImage._id) {
+              variation.picture_id = variationImage._id
+            } else {
+              delete variation.picture_id
+            }
+          }
+        })
+      }
+      return resolve(product)
+    })
   }
   resolve(product)
 })

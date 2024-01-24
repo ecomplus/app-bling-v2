@@ -3,23 +3,22 @@ const { setup } = require('@ecomplus/application-sdk')
 const getAppData = require('../store-api/get-app-data')
 const updateAppData = require('../store-api/update-app-data')
 
-const listStoreIds = () => {
+const listStoreIds = async () => {
   const storeIds = []
   const date = new Date()
   date.setHours(date.getHours() - 24)
 
-  return firestore()
+  const querySnapshot = await firestore()
     .collection('ecomplus_app_auth')
     .where('updated_at', '>', firestore.Timestamp.fromDate(date))
-    .get().then(querySnapshot => {
-      querySnapshot.forEach(documentSnapshot => {
-        const storeId = documentSnapshot.get('store_id')
-        if (storeIds.indexOf(storeId) === -1) {
-          storeIds.push(storeId)
-        }
-      })
-      return storeIds
-    })
+    .get()
+  querySnapshot.forEach(documentSnapshot => {
+    const storeId = documentSnapshot.get('store_id')
+    if (storeIds.indexOf(storeId) === -1) {
+      storeIds.push(storeId)
+    }
+  })
+  return storeIds
 }
 
 const checkIdleQueue = ({ appSdk, storeId }) => {
