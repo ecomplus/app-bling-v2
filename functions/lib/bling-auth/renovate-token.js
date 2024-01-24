@@ -40,7 +40,7 @@ module.exports = async () => {
     if (maxExistedDocs) {
       for (let i = 0; i < maxExistedDocs; i++) {
         const doc = docs[i].data();
-        const { storeId, clientId, clientSecret, refreshToken, expiredAt } = doc
+        const { storeId, clientId, clientSecret, refreshToken, expiredAt, updatedAt } = doc
         if (storeId) {
           const documentRef = require('firebase-admin')
             .firestore()
@@ -49,7 +49,7 @@ module.exports = async () => {
               documentRef.get()
                 .then((documentSnapshot) => {
                   const hasToCreateOauth = (documentSnapshot.exists &&
-                    (now + 1000 * 60 * 60 * 2 + 1000 * 60 * 10 < expiredAt.toMillis()))
+                    (now + 1000 * 60 * 60 * 2 + 1000 * 60 * 10 < updatedAt.toMillis()))
                   if (!hasToCreateOauth) {
                     handleAuth(clientId, clientSecret, code = undefined, storeId, documentSnapshot.get('refresh_token'))
                   }
