@@ -31,16 +31,13 @@ exports.post = ({ appSdk }, req, res) => {
           if (!row.setted_up) {
             console.log(`Try saving procedures for store #${storeId}`)
 
-            /**
-             * You may want to be notified when app "self" data is edited:
-
             procedures[0].triggers.push({
               resource: 'applications',
               resource_id: row.application_id,
               field: 'data'
             })
 
-             */
+            
 
             // must save procedures once only
             return appSdk.saveProcedures(storeId, procedures, auth)
