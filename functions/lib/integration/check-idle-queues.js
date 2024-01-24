@@ -30,6 +30,7 @@ const checkIdleQueue = ({ appSdk, storeId }) => {
 
         let hasWaitingQueue = false
         const { importation, exportation } = appData
+        console.log('the is importation', JSON.stringify(importation))
         if (
           importation &&
           (
@@ -69,12 +70,12 @@ const checkIdleQueue = ({ appSdk, storeId }) => {
 }
 
 module.exports = context => setup(null, true, firestore())
-  .then(appSdk => {
-    return listStoreIds().then(storeIds => {
-      const runAllStores = fn => storeIds
-        .sort(() => Math.random() - Math.random())
-        .map(storeId => fn({ appSdk, storeId }))
-      return Promise.all(runAllStores(checkIdleQueue))
-    })
+  .then(async appSdk => {
+    const storeIds = await listStoreIds()
+    console.log('store ids', storeIds)
+    const runAllStores = fn_1 => storeIds
+      .sort(() => Math.random() - Math.random())
+      .map(storeId => fn_1({ appSdk, storeId }))
+    return await Promise.all(runAllStores(checkIdleQueue))
   })
   .catch(console.error)
