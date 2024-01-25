@@ -66,14 +66,16 @@ exports.get = ({ appSdk, admin }, req, res) => {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
         try {
-          return getAppData({ appSdk, storeId, auth })
-            .then(async appData => {
+          getAppData({ appSdk, storeId, auth })
+            .then(appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
-              await new Bling(client_id, client_secret, code, storeId)
-              setTimeout(() => {
-                return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-              }, 2000)
+              const bling = new Bling(client_id, client_secret, code, storeId)
+              bling.get('/categorias/lojas')
+                .then(() => {
+                  console.log('deu certo a request de autenticação')
+                  return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+                })
             })
         } catch (error) {
           console.error(error)
@@ -88,10 +90,7 @@ exports.get = ({ appSdk, admin }, req, res) => {
             console.error(err)
           }
           if (!res.headersSent) {
-            res.send({
-              status: status || 500,
-              msg: `#${storeId} Bling Webhook error`
-            })
+            res.status(500).redirect('https://app.e-com.plus/#/apps/edit/102418/')
           }
         }
       })
