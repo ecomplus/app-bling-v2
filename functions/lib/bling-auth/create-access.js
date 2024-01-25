@@ -2,12 +2,18 @@ const createAxios = require('./create-axios')
 const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
-const now = Timestamp.now().toMillis()
+const firestoreColl = 'bling_tokens'
 module.exports = function (clientId, clientSecret, code, storeId) {
   const self = this
-  const db = getFirestore()
-  const documentRef = db.doc(`bling_tokens/${storeId}`)
-  
+
+  let documentRef
+  const now = Timestamp.now().toMillis()
+  if (firestoreColl) {
+    documentRef = require('firebase-admin')
+      .firestore()
+      .doc(`${firestoreColl}/${storeId}`)
+  }
+
   this.preparing = new Promise((resolve, reject) => {
     const authenticate = (token) => {
       self.axios = createAxios(token)
@@ -19,14 +25,21 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       auth(clientId, clientSecret, code, storeId, refreshToken)
         .then((data) => {
           console.log('> Bling token => ', JSON.stringify(data))
-          documentRef.set({
-            ...data,
-            storeId,
-            clientId,
-            clientSecret,
-            expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000)),
-            updatedAt: Timestamp.now()
-          }).catch(console.error)
+          if (!documentRef) {
+            documentRef = require('firebase-admin')
+            .firestore()
+            .doc(`${firestoreColl}/${storeId}`)
+          }
+          if (documentRef) {
+            documentRef.set({
+              ...data,
+              storeId,
+              clientId,
+              clientSecret,
+              updatedAt: Timestamp.now(),
+              expiredAt: Timestamp.fromMillis(now + ((data.expires_in - 300) * 1000)) 
+            }).catch(console.error)
+          }
           authenticate(data.access_token)
         })
         .catch(reject)
@@ -36,7 +49,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       documentRef.get()
         .then((documentSnapshot) => {
           if (documentSnapshot.exists &&
-            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 10000 // token expires in 21600 ms
+            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 100000 // token expires in 21600 ms
           ) {
             authenticate(documentSnapshot.get('access_token'))
           } else {

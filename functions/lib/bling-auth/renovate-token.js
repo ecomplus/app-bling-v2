@@ -26,8 +26,8 @@ module.exports = async () => {
   if (firestoreColl) {
     const db = getFirestore()
     const d = new Date(new Date().getTime() + 7200000)
-    const documentSnapshot = await db.collection(firestoreColl)
     console.log('data', d)
+    const documentSnapshot = await db.collection(firestoreColl)
       .where('expiredAt', '<=', d)
       .orderBy('expiredAt')
       .get()

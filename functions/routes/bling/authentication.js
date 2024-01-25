@@ -11,7 +11,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
         try {
-          return getAppData({ appSdk, storeId, auth })
+          getAppData({ appSdk, storeId, auth })
             .then(appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
@@ -31,6 +31,9 @@ exports.get = async ({ appSdk, admin }, req, res) => {
             err.status = status
             err.response = JSON.stringify(response.data)
             console.error(err)
+          }
+          if (!res.headersSent) {
+            return res.sendStatus(400)
           }
         }
       })
