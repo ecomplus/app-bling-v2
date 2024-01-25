@@ -2,9 +2,10 @@ const { firestore } = require('firebase-admin')
 const ecomClient = require('@ecomplus/client')
 const Bling = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-ecomplus')
+const { getCategories } = require('./services/categories')
 const handleJob = require('./handle-job')
 
-module.exports = ({ appSdk, storeId, auth }, blingClientId, blingClientSecret, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
+module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSecret, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
   const [sku, productId] = String(queueEntry.nextId).split(';:')
   const { client_id, client_secret, code } = appData
   let blingProductCode = sku
@@ -132,7 +133,7 @@ module.exports = ({ appSdk, storeId, auth }, blingClientId, blingClientSecret, b
             }
           }
 
-          const handleBlingStock = (blingProduct, isStockOnly) => {
+          const handleBlingStock = async (blingProduct, isStockOnly) => {
             if (blingDeposit) {
               let blingItems = [blingProduct]
               if (Array.isArray(blingProduct.variacoes)) {
@@ -186,6 +187,8 @@ module.exports = ({ appSdk, storeId, auth }, blingClientId, blingClientSecret, b
               console.log(`#${storeId} skipping ${sku} - is a variation`)
               return
             }
+            const category = await getCategories(appData, storeId)
+            console.log('category with store', JSON.stringify(category || {}))
             return parseProduct(blingProduct, product && product.variations, storeId, auth, method === 'POST', appData)
               .then(product => {
                 if (!isNaN(quantity)) {
