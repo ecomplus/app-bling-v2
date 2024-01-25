@@ -118,7 +118,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
             return payload
           }
           const { product, variationId, hasVariations } = payload
-          const bling = new Bling(client_id, client_secret, code, storeId)
+          const blingAxios = new Bling(client_id, client_secret, code, storeId)
 
           if (!product && (isHiddenQueue || productId) && !appData.import_product) {
             dispatchNullJob()
@@ -205,28 +205,33 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
           if (blingStockUpdate && isHiddenQueue && !appData.update_product_auto && !appData.import_product) {
             job = handleBlingStock(blingStockUpdate, true)
           } else {
-            job = bling.get('/produtos', {
-              params: {
-                codigo: blingProductCode,
-                idLoja: blingStore
-              }
-            }).then(({ data }) => {
-              if (Array.isArray(data) && data.length) {
-                const blingProduct = data.find(({ codigo }) => blingProductCode === String(codigo))
-                if (blingProduct) {
-                  return bling.get(`/produtos/${blingProduct.id}`).then((res) => {
-                    const blingData = res.data && res.data.data
-                    console.log(blingData)
-                    if (blingData) {
-                      return handleBlingStock(blingData)
-                    }
-                  })
+            bling.preparing
+            .then(() => {
+              console.log('ready for request')
+              const bling = blingAxios.axios
+              job = bling.get('/produtos', {
+                params: {
+                  codigo: blingProductCode,
+                  idLoja: blingStore
                 }
-              }
-              const msg = `SKU ${sku} não encontrado no Bling`
-              const err = new Error(msg)
-              err.isConfigError = true
-              throw new Error(err)
+              }).then(({ data }) => {
+                if (Array.isArray(data) && data.length) {
+                  const blingProduct = data.find(({ codigo }) => blingProductCode === String(codigo))
+                  if (blingProduct) {
+                    return bling.get(`/produtos/${blingProduct.id}`).then((res) => {
+                      const blingData = res.data && res.data.data
+                      console.log(blingData)
+                      if (blingData) {
+                        return handleBlingStock(blingData)
+                      }
+                    })
+                  }
+                }
+                const msg = `SKU ${sku} não encontrado no Bling`
+                const err = new Error(msg)
+                err.isConfigError = true
+                throw new Error(err)
+              })
             })
           }
 

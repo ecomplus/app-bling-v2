@@ -61,9 +61,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
    */
   const trigger = req.body
   const resourceId = trigger.resource_id || trigger.inserted_id
-  if (trigger.resource === 'applications') {
-    console.log('acionando webhook', storeId, JSON.stringify(req.body))
-  }
+
   // get app configured options
   if (!handlingIds.includes(resourceId)) {
     handlingIds.push(resourceId)
