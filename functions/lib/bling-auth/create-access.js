@@ -6,7 +6,7 @@ const now = Timestamp.now().toMillis()
 module.exports = function (clientId, clientSecret, code, storeId) {
   const self = this
   const db = getFirestore()
-  const documentRef = db.collection(`bling_tokens/${storeId}`)
+  const documentRef = db.doc(`bling_tokens/${storeId}`)
   
   this.preparing = new Promise((resolve, reject) => {
     const authenticate = (token) => {
