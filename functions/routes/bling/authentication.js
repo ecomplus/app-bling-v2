@@ -15,7 +15,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
             .then(appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
-              const bling = new blingAuth(client_id, client_secret, code, storeId)
+              const bling = new Bling(client_id, client_secret, code, storeId)
               setTimeout(() => {
                 return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 4000)
