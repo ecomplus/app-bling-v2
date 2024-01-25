@@ -55,11 +55,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   }
 }
 
-exports.get = ({ appSdk, admin }, req, res) => {
+exports.get = async ({ appSdk, admin }, req, res) => {
   console.log('>> GET  BLING')
   const { body, query } = req
   const { state, code } = query
-  console.log('Query', JSON.stringify(query))
   const storeId = parseInt(query.storeId, 10)
   console.log('>> Store: ', storeId, ' code: ', code, 'aplicativo', state, '<<')
   if (storeId > 100 && code) {
@@ -67,10 +66,10 @@ exports.get = ({ appSdk, admin }, req, res) => {
       .then(async (auth) => {
         try {
           getAppData({ appSdk, storeId, auth })
-            .then(appData => {
+            .then(async appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
-              const bling = new Bling(client_id, client_secret, code, storeId)
+              const bling = await bling(client_id, client_secret, code, storeId)
               bling.get('/categorias/lojas')
                 .then(() => {
                   console.log('deu certo a request de autenticação')

@@ -2,18 +2,12 @@ const createAxios = require('./create-axios')
 const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
-const firestoreColl = 'bling_tokens'
 const now = Timestamp.now().toMillis()
 module.exports = function (clientId, clientSecret, code, storeId) {
   const self = this
 
-  let documentRef
-  if (firestoreColl && storeId) {
-    documentRef = require('firebase-admin')
-      .firestore()
-      .doc(`${firestoreColl}/${storeId}`)
-  }
-
+  const documentRef = getFirestore.doc(`bling_tokens/${storeId}`)
+  
   this.preparing = new Promise((resolve, reject) => {
     const authenticate = (token) => {
       self.axios = createAxios(token)
@@ -25,16 +19,14 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       auth(clientId, clientSecret, code, storeId, refreshToken)
         .then((data) => {
           console.log('> Bling token => ', JSON.stringify(data))
-          if (documentRef) {
-            documentRef.set({
-              ...data,
-              storeId,
-              clientId,
-              clientSecret,
-              expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000)),
-              updatedAt: Timestamp.now()
-            }).catch(console.error)
-          }
+          documentRef.set({
+            ...data,
+            storeId,
+            clientId,
+            clientSecret,
+            expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000)),
+            updatedAt: Timestamp.now()
+          }).catch(console.error)
           authenticate(data.access_token)
         })
         .catch(reject)
