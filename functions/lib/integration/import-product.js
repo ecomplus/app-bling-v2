@@ -227,6 +227,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
                       })
                     }
                   }
+                  console.log('the returned product is:', data)
                   const msg = `SKU ${sku} não encontrado no Bling`
                   const err = new Error(msg)
                   err.isConfigError = true
