@@ -211,7 +211,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
                 const bling = blingAxios.axios
                 job = bling.get('/produtos', {
                   params: {
-                    codigo: blingProductCode,
+                    codigo: sku,
                     idLoja: blingStore
                   }
                 }).then((data) => {
