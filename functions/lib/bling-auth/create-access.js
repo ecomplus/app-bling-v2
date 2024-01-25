@@ -25,11 +25,6 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       auth(clientId, clientSecret, code, storeId, refreshToken)
         .then((data) => {
           console.log('> Bling token => ', JSON.stringify(data))
-          if (!documentRef) {
-            documentRef = require('firebase-admin')
-            .firestore()
-            .doc(`${firestoreColl}/${storeId}`)
-          }
           if (documentRef) {
             documentRef.set({
               ...data,

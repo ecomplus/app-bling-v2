@@ -20,7 +20,7 @@ module.exports = (accessToken, clientId, clientSecret) => {
 
   return axios.create({
     baseURL,
-    timeout: 6000,
+    timeout: 10000,
     headers
   })
 }

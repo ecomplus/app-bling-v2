@@ -13,10 +13,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       .then(async (auth) => {
         try {
           getAppData({ appSdk, storeId, auth })
-            .then(appData => {
+            .then(async appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
-              const bling = new Bling(client_id, client_secret, code, storeId)
+              await new Bling(client_id, client_secret, code, storeId)
               setTimeout(() => {
                 return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 2000)
@@ -56,7 +56,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 }
 
 exports.get = ({ appSdk, admin }, req, res) => {
-  console.log('>> POST  BLING')
+  console.log('>> GET  BLING')
   const { body, query } = req
   const { state, code } = query
   console.log('Query', JSON.stringify(query))
@@ -66,18 +66,15 @@ exports.get = ({ appSdk, admin }, req, res) => {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
         try {
-          getAppData({ appSdk, storeId, auth })
-            .then(appData => {
+          return getAppData({ appSdk, storeId, auth })
+            .then(async appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
-              const bling = new Bling(client_id, client_secret, code, storeId)
+              await new Bling(client_id, client_secret, code, storeId)
               setTimeout(() => {
                 return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 2000)
             })
-            if (!res.headersSent) {
-              return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-            } 
         } catch (error) {
           console.error(error)
           const { response, config } = error
