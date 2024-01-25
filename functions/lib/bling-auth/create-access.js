@@ -3,6 +3,7 @@ const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
+const now = Timestamp.now().toMillis()
 module.exports = function (clientId, clientSecret, code, storeId) {
   const self = this
 
@@ -11,24 +12,6 @@ module.exports = function (clientId, clientSecret, code, storeId) {
     documentRef = require('firebase-admin')
       .firestore()
       .doc(`${firestoreColl}/${storeId}`)
-  } else if (firestoreColl) {
-    const db = getFirestore()
-    const d = new Date(new Date().getTime() - 9000)
-    db.collection(firestoreColl)
-      .where('updatedAt', '<=', d)
-      .orderBy('updatedAt')
-      .limit(1)
-      .get()
-      .then(documentSnapshot => {
-        if (!documentSnapshot.empty) {
-          storeId = documentSnapshot.storeId
-          clientId = documentSnapshot.clientId
-          clientSecret = documentSnapshot.clientSecret
-          documentRef = require('firebase-admin')
-            .firestore()
-            .doc(`${firestoreColl}/${storeId}`)
-        } 
-      })
   }
 
   this.preparing = new Promise((resolve, reject) => {
