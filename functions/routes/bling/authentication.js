@@ -1,5 +1,5 @@
 const getAppData = require('./../../lib/store-api/get-app-data')
-const blingAuth = require('../../lib/bling-auth/create-access')
+const Bling = require('../../lib/bling-auth/create-access')
 
 exports.get = async ({ appSdk, admin }, req, res) => {
   console.log('>> GET  BLING')
@@ -11,18 +11,14 @@ exports.get = async ({ appSdk, admin }, req, res) => {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
         try {
-          getAppData({ appSdk, storeId, auth })
-            .then(async appData => {
+          return getAppData({ appSdk, storeId, auth })
+            .then(appData => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
-              const bling = await blingAuth(client_id, client_secret, code, storeId)
-              console.log('bling', bling)
-              return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-              /* bling.get('/categorias/lojas')
-                .then(() => {
-                  console.log('deu certo a request de autenticação')
-                  
-                }) */
+              const bling = new blingAuth(client_id, client_secret, code, storeId)
+              setTimeout(() => {
+                return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+              }, 4000)
             })
         } catch (error) {
           console.error(error)
@@ -35,9 +31,6 @@ exports.get = async ({ appSdk, admin }, req, res) => {
             err.status = status
             err.response = JSON.stringify(response.data)
             console.error(err)
-          }
-          if (!res.headersSent) {
-            res.status(500).redirect('https://app.e-com.plus/#/apps/edit/102418/')
           }
         }
       })
