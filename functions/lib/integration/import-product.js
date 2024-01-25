@@ -207,12 +207,10 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
           } else {
             blingAxios.preparing
               .then(() => {
-                console.log('ready for request')
                 const bling = blingAxios.axios
                 job = bling.get('/produtos', {
                   params: {
-                    codigo: sku,
-                    idLoja: blingStore
+                    codigo: sku
                   }
                 }).then((data) => {
                   if (Array.isArray(data) && data.length) {
@@ -220,8 +218,8 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
                     if (blingProduct) {
                       return bling.get(`/produtos/${blingProduct.id}`).then((res) => {
                         const blingData = res.data && res.data.data
-                        console.log(blingData)
                         if (blingData) {
+                          console.log('Produto bling', JSON.stringify(blingData))
                           return handleBlingStock(blingData)
                         }
                       })
