@@ -16,11 +16,13 @@ exports.get = async ({ appSdk, admin }, req, res) => {
               const { client_id, client_secret } = appData
               console.log('Pass variables', JSON.stringify({client_id, client_secret, code, storeId}))
               const bling = await blingAuth(client_id, client_secret, code, storeId)
-              bling.get('/categorias/lojas')
+              console.log('bling', bling)
+              return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
+              /* bling.get('/categorias/lojas')
                 .then(() => {
                   console.log('deu certo a request de autenticação')
-                  return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-                })
+                  
+                }) */
             })
         } catch (error) {
           console.error(error)
