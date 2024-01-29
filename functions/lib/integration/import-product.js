@@ -205,7 +205,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
           if (blingStockUpdate && isHiddenQueue && !appData.update_product_auto && !appData.import_product) {
             job = handleBlingStock(blingStockUpdate, true)
           } else {
-            blingAxios.preparing
+            return blingAxios.preparing
               .then(() => {
                 const bling = blingAxios.axios
                 job = bling.get('/produtos', {
@@ -217,7 +217,10 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
                   if (responseData && Array.isArray(responseData) && responseData.length) {
                     const blingProduct = responseData.find(({ codigo }) => blingProductCode === String(codigo))
                     if (blingProduct) {
-                      return bling.get(`/produtos/${blingProduct.id}`).then((res) => {
+                      return blingAxios.preparing
+                        .then(() => {
+                        const blingRequest = blingAxios.axios})
+                        blingRequest.get(`/produtos/${blingProduct.id}`).then((res) => {
                         const blingData = res.data && res.data.data
                         if (blingData) {
                           console.log('Produto bling', JSON.stringify(blingData))
