@@ -48,6 +48,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
     if (documentRef) {
       documentRef.get()
         .then((documentSnapshot) => {
+          const expiredAt = documentSnapshot.get('expiredAt')
           if (documentSnapshot.exists &&
             now + tokenExpirationGap < expiredAt.toMillis() // token expires in 21600 ms
           ) {
