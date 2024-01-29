@@ -212,7 +212,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
                   params: {
                     codigo: sku
                   }
-                }).then((data) => {
+                }).then(({data}) => {
                   if (Array.isArray(data) && data.length) {
                     const blingProduct = data.find(({ codigo }) => blingProductCode === String(codigo))
                     if (blingProduct) {

@@ -3,7 +3,7 @@ const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
-module.exports = function (clientId, clientSecret, code, storeId) {
+module.exports = function (clientId, clientSecret, code, storeId, tokenExpirationGap = 300000) {
   const self = this
 
   let documentRef
@@ -49,7 +49,7 @@ module.exports = function (clientId, clientSecret, code, storeId) {
       documentRef.get()
         .then((documentSnapshot) => {
           if (documentSnapshot.exists &&
-            Date.now() - documentSnapshot.updateTime.toDate().getTime() <= 6000000 // token expires in 21600 ms
+            now + tokenExpirationGap < expiredAt.toMillis() // token expires in 21600 ms
           ) {
             authenticate(documentSnapshot.get('access_token'))
           } else {
