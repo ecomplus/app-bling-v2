@@ -153,16 +153,16 @@ exports.scheduledSyncBlingToken = functions.pubsub.schedule(queueCreateAccess).o
 console.log(`-- Sheduled active access from bling '${queueCreateAccess}'`)
 
 // schedule active check queues from Store API
-const checkIdleQueues = require('./lib/integration/check-idle-queues')
+/* const checkIdleQueues = require('./lib/integration/check-idle-queues')
 const queueFallbackCron = 'every 60 mins'
 exports.scheduledSync = functions.pubsub.schedule(queueFallbackCron).onRun(checkIdleQueues)
-console.log(`-- Sheduled active check idle queues from Store API '${queueFallbackCron}'`)
+console.log(`-- Sheduled active check idle queues from Store API '${queueFallbackCron}'`) */
 
 // delete old stored Bling order states
-const clearOrderStates = require('./lib/integration/clear-order-states')
+/* const clearOrderStates = require('./lib/integration/clear-order-states')
 const clearStatesCron = '56 13 * * *'
 exports.scheduledClear = functions.pubsub.schedule(clearStatesCron).onRun(clearOrderStates)
-console.log(`-- Sheduled clearing order stored states '${clearStatesCron}'`)
+console.log(`-- Sheduled clearing order stored states '${clearStatesCron}'`) */
 
 exports.onBlingEvents = require('./lib/pubsub/create-topic')
   .createEventsFunction('bling', handleEventBling)
