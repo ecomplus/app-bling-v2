@@ -3,7 +3,7 @@ const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
-module.exports = function (clientId, clientSecret, code, storeId, tokenExpirationGap = 300000) {
+module.exports = function (clientId, clientSecret, code, storeId, tokenExpirationGap = 9000) {
   const self = this
 
   let documentRef
@@ -23,15 +23,10 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
     const handleAuth = (clientId, clientSecret, code, storeId, refreshToken) => {
       console.log('> Bling Auth02 ', storeId)
       auth(clientId, clientSecret, code, storeId, refreshToken)
-        .then((data) => {
+        .then(async (data) => {
           console.log('> Bling token => ', JSON.stringify(data))
-          if (!documentRef) {
-            documentRef = require('firebase-admin')
-            .firestore()
-            .doc(`${firestoreColl}/${storeId}`)
-          }
           if (documentRef) {
-            documentRef.set({
+            await documentRef.set({
               ...data,
               storeId,
               clientId,
@@ -39,8 +34,9 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               updatedAt: Timestamp.now(),
               expiredAt: Timestamp.fromMillis(now + ((data.expires_in - 300) * 1000)) 
             }).catch(console.error)
+            await authenticate(data.access_token)
           }
-          authenticate(data.access_token)
+          
         })
         .catch(reject)
     }

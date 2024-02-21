@@ -7,21 +7,6 @@ module.exports = async () => {
   const maxDocs = 15
   const now = Timestamp.now().toMillis()
 
-  const handleAuth = async (clientId, clientSecret, code = undefined, storeId, refreshToken) => {
-    console.log('> Bling Auth02 ', storeId)
-    const data = await auth(clientId, clientSecret, code, storeId, refreshToken)
-    console.log('> Bling token => ', JSON.stringify(data))
-    if (documentRef) {
-      return documentRef.set({
-        ...data,
-        storeId,
-        clientId,
-        clientSecret,
-        updatedAt: Timestamp.fromMillis(now),
-        expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000))
-      }).catch(console.error)
-    }
-  }
 
   if (firestoreColl) {
     const db = getFirestore()
@@ -45,6 +30,21 @@ module.exports = async () => {
           const documentRef = require('firebase-admin')
             .firestore()
             .doc(`${firestoreColl}/${storeId}`)
+            const handleAuth = async (clientId, clientSecret, code = undefined, storeId, refreshToken) => {
+              console.log('> Bling Auth02 ', storeId)
+              const data = await auth(clientId, clientSecret, code, storeId, refreshToken)
+              console.log('> Bling token => ', JSON.stringify(data))
+              if (documentRef) {
+                return documentRef.set({
+                  ...data,
+                  storeId,
+                  clientId,
+                  clientSecret,
+                  updatedAt: Timestamp.fromMillis(now),
+                  expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000))
+                }).catch(console.error)
+              }
+            }
             if (documentRef) {
               documentRef.get()
                 .then((documentSnapshot) => {
