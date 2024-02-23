@@ -29,8 +29,7 @@ const removeFromQueue = (resourceId) => {
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
   const { storeId } = req
-  
-  
+
   if (req.get('host') && !baseUri.includes(req.get('host'))) {
     console.log('>>> Proxy to function v2')
     const axios = require('axios')
@@ -85,7 +84,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             console.log(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
 
             const blingClientId = appData.client_id
-            const blingClientSecret = appData.client_secret
+            // const blingClientSecret = appData.client_secret
             const blingStore = appData.bling_store
             const blingDeposit = appData.bling_deposit
             if (typeof blingClientId === 'string' && blingClientId) {
@@ -95,7 +94,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               if (trigger.resource === 'applications') {
                 integrationConfig = appData
                 canCreateNew = true
-              } else if (trigger.authentication_id !== auth.myId) {
+              } /* else if (trigger.authentication_id !== auth.myId) {
                 switch (trigger.resource) {
                   case 'orders':
                     if (false) {
@@ -130,6 +129,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     break
                 }
               }
+              // */
               if (integrationConfig) {
                 const actions = Object.keys(integrationHandlers)
                 actions.forEach(action => {
@@ -164,7 +164,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           return handler(
                             { appSdk, storeId, auth },
                             blingClientId,
-                            blingClientSecret,
                             blingStore,
                             blingDeposit,
                             queueEntry,

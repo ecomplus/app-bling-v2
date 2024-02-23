@@ -5,17 +5,17 @@ const Bling = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-bling')
 const handleJob = require('./handle-job')
 
-module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
+module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const productId = queueEntry.nextId
-  const { client_id, client_secret, code } = appData
+  const { client_id: clientId, client_secret: clientSecret } = appData
   return ecomClient.store({
     storeId,
     url: `/products/${productId}.json`
   })
 
-    .then(({ data }) => {
+    .then(async ({ data }) => {
       const product = data
-      let blingProductCode, originalBlingProduct, blingProductId
+      let blingProductCode, originalBlingProduct, blingProductId, blingOrderNumber
       let { metafields } = product
       if (metafields) {
         const metafieldCodigo = metafields.find(({ field }) => field === 'bling:codigo')
@@ -30,9 +30,12 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
       if (!blingProductCode) {
         blingProductCode = product.sku
       }
-      const bling = new Bling(client_id, client_secret, code, storeId)
+      // Bling Requests
+      const blingAxios = new Bling(clientId, clientSecret, undefined, storeId)
+      await blingAxios.preparing
+      const bling = blingAxios.axios
 
-      const job = bling.get(`/produtos`, {
+      const job = bling.get('/produtos', {
         params: {
           codigo: blingProductCode,
           idLoja: blingStore
@@ -45,9 +48,13 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
           throw err
         })
 
-        .then(({ data }) => {
-          if (Array.isArray(data)) {
-            originalBlingProduct = data.find(({ codigo }) => product.sku === String(codigo))
+        .then(({ data: { data: blingProducts } }) => {
+          if (blingProducts && Array.isArray(blingProducts)) {
+            originalBlingProduct = blingProducts.find(({ codigo }) => product.sku === String(codigo))
+
+            // Check blingProductId and update
+            blingProductId = !blingProductId && originalBlingProduct ? originalBlingProduct.id : blingProductId
+
             if (!canCreateNew && !originalBlingProduct) {
               return null
             }
@@ -55,12 +62,15 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
           if (canCreateNew || appData.export_quantity || !blingStore) {
             const blingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
             if (blingProduct) {
-              const data = { produto: blingProduct }
-              let endpoint = originalBlingProduct ? `/produtos/${blingProductId}` : '/produtos'
+              const endpoint = originalBlingProduct ? `/produtos/${blingProductId}` : '/produtos'
               if (originalBlingProduct) {
-                return bling.put(endpoint, data)
+                // TODO: remove debug
+                console.log('>> Put Bling ', endpoint)
+                return bling.put(endpoint, blingProduct)
               }
-              return bling.post(endpoint, data)
+              // TODO: remove debug
+              console.log('>> Post Bling')
+              return bling.post(endpoint, blingProduct)
             }
           }
           return null
@@ -73,26 +83,44 @@ module.exports = ({ appSdk, storeId }, blingToken, blingStore, blingDeposit, que
               if (!metafields) {
                 metafields = []
               }
-              metafields.push({
-                _id: ecomUtils.randomObjectId(),
-                namespace: 'bling',
-                field: 'bling:id',
-                value: String(blingOrderNumber)
-              })
+
+              if (blingOrderNumber) {
+                metafields.push({
+                  _id: ecomUtils.randomObjectId(),
+                  namespace: 'bling',
+                  field: 'bling:id',
+                  value: String(blingOrderNumber)
+                })
+              }
+
               metafields.push({
                 _id: ecomUtils.randomObjectId(),
                 namespace: 'bling',
                 field: 'bling:codigo',
                 value: String(responseData.id)
               })
-              appSdk.apiRequest(storeId, `/products/${productId}.json`, 'PATCH', {
-                metafields
-              }, auth)
-                .catch(console.error)
+
+              appSdk.apiRequest(
+                storeId,
+                `products/${productId}.json`,
+                'PATCH',
+                { metafields },
+                auth
+              ).catch(console.error)
             }
           }
           return response
         })
+        // TODO: remove debug
+        .catch(err => {
+          const data = err.response?.data
+          if (data) {
+            console.log('ERROR ', data && JSON.stringify(data))
+          } else {
+            console.error(err)
+          }
+        })
+
       handleJob({ appSdk, storeId }, queueEntry, job)
     })
 

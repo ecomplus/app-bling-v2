@@ -181,6 +181,8 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
 }
 
 const handleJob = (appSession, queueEntry, job) => {
+  // TODO: remove debug
+  console.log('>> Handle Job ')
   job
     .then(payload => {
       if (payload && typeof payload.then === 'function') {
@@ -193,6 +195,8 @@ const handleJob = (appSession, queueEntry, job) => {
       return true
     })
     .catch(err => {
+      // TODO: remove debug
+      console.log('> handle Error ', err)
       if (!queueEntry.isNotQueued) {
         return log(appSession, queueEntry, err)
       }
