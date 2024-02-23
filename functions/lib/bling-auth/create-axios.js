@@ -3,7 +3,7 @@ const axios = require('axios')
 module.exports = (accessToken, clientId, clientSecret) => {
   let headers = {
   }
-  
+
   const baseURL = 'https://www.bling.com.br/Api/v3/'
   if (accessToken) {
     console.log('> token ', accessToken)

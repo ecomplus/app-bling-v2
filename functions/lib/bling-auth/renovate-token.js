@@ -3,63 +3,54 @@ const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
 module.exports = async () => {
-
   const maxDocs = 15
-  const now = Timestamp.now().toMillis()
+  const now = new Date()
 
+  const handleAuth = async (document) => {
+    const doc = document.data()
+    const {
+      clientId,
+      clientSecret,
+      refresh_token: refreshToken,
+      storeId
+    } = doc
+    console.log('> Renove Token Bling ', storeId)
+    const data = await auth(clientId, clientSecret, undefined, storeId, refreshToken)
+    console.log('> Bling new token => ', JSON.stringify(data))
+    if (document.ref) {
+      return document.ref.set(
+        {
+          ...data,
+          updatedAt: Timestamp.fromDate(now),
+          expiredAt: Timestamp.fromDate(new Date(now.getTime() + 7200000))
+        },
+        { merge: true }
+      ).catch(console.error)
+    }
+  }
 
   if (firestoreColl) {
     const db = getFirestore()
-    const d = new Date(new Date().getTime() + 7200000)
-    console.log('data', d)
+    const date = new Date(new Date().getTime() + 7200000)
+    console.log('> ExpiredAt <= ', date)
     const documentSnapshot = await db.collection(firestoreColl)
-      .where('expiredAt', '<=', d)
+      .where('expiredAt', '<=', date)
       .orderBy('expiredAt')
       .get()
+
     const { docs } = documentSnapshot
     console.log(`There is ${docs && docs.length} docs expiring in two hours`)
-    const maxExistedDocs = docs && docs.length > maxDocs 
+    const maxExistedDocs = docs && docs.length > maxDocs
       ? maxDocs
       : (docs && docs.length) || 0
     console.log('max existed docs', maxExistedDocs)
     if (maxExistedDocs) {
       for (let i = 0; i < maxExistedDocs; i++) {
-        const doc = docs[i].data();
-        const { storeId, clientId, clientSecret, refreshToken, expiredAt, updatedAt } = doc
-        if (storeId) {
-          const documentRef = require('firebase-admin')
-            .firestore()
-            .doc(`${firestoreColl}/${storeId}`)
-            const handleAuth = async (clientId, clientSecret, code = undefined, storeId, refreshToken) => {
-              console.log('> Bling Auth02 ', storeId)
-              const data = await auth(clientId, clientSecret, code, storeId, refreshToken)
-              console.log('> Bling token => ', JSON.stringify(data))
-              if (documentRef) {
-                return documentRef.set({
-                  ...data,
-                  storeId,
-                  clientId,
-                  clientSecret,
-                  updatedAt: Timestamp.fromMillis(now),
-                  expiredAt: Timestamp.fromMillis(now + ((res.data.expires_in - 300) * 1000))
-                }).catch(console.error)
-              }
-            }
-            if (documentRef) {
-              documentRef.get()
-                .then((documentSnapshot) => {
-                  const hasToCreateOauth = (documentSnapshot.exists &&
-                    (now + 1000 * 60 * 60 * 2 + 1000 * 60 * 10 < expiredAt.toMillis()))
-                  if (!hasToCreateOauth) {
-                    handleAuth(clientId, clientSecret, code = undefined, storeId, documentSnapshot.get('refresh_token'))
-                  }
-                })
-            } else {
-              handleAuth(clientId, clientSecret, code, storeId)
-            }
+        const docRef = docs[i]
+        if (docRef.data()?.storeId) {
+          handleAuth(docRef)
         }
       }
     }
   }
 }
-

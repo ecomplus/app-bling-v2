@@ -26,17 +26,17 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
         .then(async (data) => {
           console.log('> Bling token => ', JSON.stringify(data))
           if (documentRef) {
-            await documentRef.set({
+            authenticate(data.access_token)
+
+            documentRef.set({
               ...data,
               storeId,
               clientId,
               clientSecret,
               updatedAt: Timestamp.now(),
-              expiredAt: Timestamp.fromMillis(now + ((data.expires_in - 300) * 1000)) 
+              expiredAt: Timestamp.fromMillis(now + (7200 * 1000))
             }).catch(console.error)
-            await authenticate(data.access_token)
           }
-          
         })
         .catch(reject)
     }
@@ -46,7 +46,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
         .then((documentSnapshot) => {
           const expiredAt = documentSnapshot.get('expiredAt')
           if (documentSnapshot.exists &&
-            now + tokenExpirationGap < expiredAt.toMillis() // token expires in 21600 ms
+            now + tokenExpirationGap < expiredAt.toMillis() // token expires in 21600 s
           ) {
             authenticate(documentSnapshot.get('access_token'))
           } else {
@@ -59,4 +59,3 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
     }
   })
 }
-
