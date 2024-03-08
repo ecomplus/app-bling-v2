@@ -1,5 +1,5 @@
 const getAppData = require('./../../lib/store-api/get-app-data')
-// const Bling = require('../../lib/bling-auth/create-access')
+const Bling = require('../../lib/bling-auth/create-access')
 
 exports.get = async ({ appSdk, admin }, req, res) => {
   console.log('>> GET  BLING')
@@ -15,7 +15,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
             .then(appData => {
               const { client_id: clienteId, client_secret: clientSecret } = appData
               console.log('Pass variables', JSON.stringify({ clienteId, clientSecret, code, storeId }))
-              // const bling = new Bling(clienteId, clientSecret, code, storeId)
+              const bling = new Bling(clienteId, clientSecret, code, storeId)
               setTimeout(() => {
                 return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
               }, 4000)
