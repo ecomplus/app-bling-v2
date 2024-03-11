@@ -17,9 +17,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
               console.log('Pass variables', JSON.stringify({ clienteId, clientSecret, code, storeId }))
               const bling = new Bling(clienteId, clientSecret, code, storeId)
               await bling.preparing
-              setTimeout(() => {
-                return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
-              }, 4000)
+              return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
             })
         } catch (error) {
           console.error(error)
