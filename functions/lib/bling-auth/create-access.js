@@ -34,7 +34,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               clientId,
               clientSecret,
               updatedAt: now,
-              expiredAt: now.toMillis() + gapTime
+              expiredAt: now.toMillis() + gapTime.toMillis()
             }
             console.log('>>> expiredAt: ', body.expiredAt.toDate(), ' ', now.toDate(), ' ', gapTime.toMillis())
             if (code) {
