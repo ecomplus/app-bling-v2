@@ -2,9 +2,10 @@ const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
+const gapTime = 1 * 5 * 60 * 1000
 module.exports = async () => {
   const maxDocs = 15
-  const now = new Date()
+  const now = Timestamp.now()
 
   const handleAuth = async (document) => {
     const doc = document.data()
@@ -14,15 +15,15 @@ module.exports = async () => {
       refresh_token: refreshToken,
       storeId
     } = doc
-    console.log('> Renove Token Bling ', storeId)
-    const data = await auth(clientId, clientSecret, undefined, storeId, refreshToken)
+    console.log('> Renove Token Bling ', storeId, JSON.stringify(doc))
+    const data = await auth(clientId, clientSecret, null, storeId, refreshToken)
     console.log('> Bling new token => ', JSON.stringify(data))
     if (document.ref) {
       return document.ref.set(
         {
           ...data,
-          updatedAt: Timestamp.fromDate(now),
-          expiredAt: Timestamp.fromDate(new Date(now.getTime() + 7200000))
+          updatedAt: now,
+          expiredAt: Timestamp.fromMillis(now.toMillis() + gapTime)
         },
         { merge: true }
       ).catch(console.error)
@@ -31,8 +32,8 @@ module.exports = async () => {
 
   if (firestoreColl) {
     const db = getFirestore()
-    const date = new Date(new Date().getTime() + 7200000)
-    console.log('> ExpiredAt <= ', date)
+    const date = Timestamp.fromMillis(now.toMillis() + gapTime)
+    console.log('> ExpiredAt <= ', date.toDate())
     const documentSnapshot = await db.collection(firestoreColl)
       .where('expiredAt', '<=', date)
       .orderBy('expiredAt')

@@ -33,7 +33,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               clientId,
               clientSecret,
               updatedAt: now,
-              expiredAt: Timestamp.fromMillis(now.toMillis() + (30 * 60 * 1000))
+              expiredAt: Timestamp.fromMillis(now.toMillis() + (1 * 5 * 60 * 1000))
             }
 
             if (code) {
