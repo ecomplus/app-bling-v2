@@ -18,8 +18,8 @@ module.exports = (clientId, clientSecret, code, storeId, refreshToken) => new Pr
     axios.post(path, params.toString())
       .then(({ data }) => resolve(data))
       .catch(err => {
-        console.error('Deu erro s:', storeId, ' => ', JSON.stringify(err.response || err))
-        // console.log('Deu erro quero response status', err.response.status)
+        console.error('> Deu erro s:', storeId, ' => ', JSON.stringify(err))
+        console.err('#', storeId, ' => ', err.response?.data && JSON.stringify(err.response.data))
         if (!isRetry && err.response && err.response.status >= 429) {
           setTimeout(() => request(true), 7000)
         }

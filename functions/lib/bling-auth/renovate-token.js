@@ -2,7 +2,8 @@ const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
-const gapTime = 1 * 5 * 60 * 1000
+const lastTimeUpdate = 1 * 5 * 60 * 1000
+
 module.exports = async () => {
   const maxDocs = 15
   const now = Timestamp.now()
@@ -23,7 +24,7 @@ module.exports = async () => {
         {
           ...data,
           updatedAt: now,
-          expiredAt: Timestamp.fromMillis(now.toMillis() + gapTime)
+          expiredAt: Timestamp.fromMillis(now.toMillis() + lastTimeUpdate)
         },
         { merge: true }
       ).catch(console.error)
@@ -32,10 +33,11 @@ module.exports = async () => {
 
   if (firestoreColl) {
     const db = getFirestore()
-    const date = Timestamp.fromMillis(now.toMillis() + gapTime)
-    console.log('> ExpiredAt <= ', date.toDate())
+    const lastDate = Timestamp.fromMillis(now.toMillis() - lastTimeUpdate)
+    console.log('> ExpiredAt <= ', lastDate.toDate())
     const documentSnapshot = await db.collection(firestoreColl)
-      .where('expiredAt', '<=', date)
+      .where('expiredAt', '<', Timestamp.fromMillis(now.toMillis() + 1 * 60 * 1000))
+      .where('expiredAt', '>=', lastDate)
       .orderBy('expiredAt')
       .get()
 
