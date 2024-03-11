@@ -35,7 +35,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               clientSecret,
               updatedAt: now,
               expiredAt: Timestamp.fromMillis(now + 7200)
-            }).catch(console.error)
+            }, { merge: true }).catch(console.error)
           }
         })
         .catch(reject)
