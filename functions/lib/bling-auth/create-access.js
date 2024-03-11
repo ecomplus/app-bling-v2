@@ -35,6 +35,9 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               updatedAt: now,
               expiredAt: Timestamp.fromMillis(now + 7200)
             }
+            if (code) {
+              body.code = code
+            }
 
             documentRef.set(body, { merge: true }).catch(console.error)
           }
@@ -42,7 +45,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
         .catch(reject)
     }
 
-    if (documentRef) {
+    if (documentRef && !code) {
       documentRef.get()
         .then((documentSnapshot) => {
           const expiredAt = documentSnapshot.get('expiredAt')
@@ -50,8 +53,6 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
             now + tokenExpirationGap < expiredAt.toMillis() // token expires in 21600 s
           ) {
             authenticate(documentSnapshot.get('access_token'))
-          } else if (code) {
-            handleAuth(clientId, clientSecret, code, storeId)
           } else {
             handleAuth(clientId, clientSecret, code, storeId, documentSnapshot.get('refresh_token'))
           }
