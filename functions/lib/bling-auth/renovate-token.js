@@ -33,12 +33,12 @@ module.exports = async () => {
 
   if (firestoreColl) {
     const db = getFirestore()
-    const lastDateUpdate = Timestamp.fromMillis(now.toMillis() - 2 * lastTimeUpdate)
+    const lastDateUpdate = Timestamp.fromMillis(now.toMillis() - 0.5 * lastTimeUpdate) // Discard probable deactivateDd tokens
     const nextDateUpdate = Timestamp.fromMillis(now.toMillis() + lastTimeUpdate)
     console.log('> ExpiredAt >=', lastDateUpdate.toDate(), ' < ', nextDateUpdate.toDate())
     const documentSnapshot = await db.collection(firestoreColl)
       .where('expiredAt', '<', nextDateUpdate)
-      .where('expiredAt', '>=', lastDateUpdate) // Discard probable deactivateDd tokens
+      .where('expiredAt', '>=', lastDateUpdate)
       .orderBy('expiredAt')
       .get()
 
