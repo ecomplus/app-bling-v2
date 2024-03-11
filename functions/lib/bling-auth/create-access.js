@@ -26,7 +26,6 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
         .then(async (data) => {
           console.log('> Bling token => ', JSON.stringify(data))
           if (documentRef) {
-            const gapTime = Timestamp.fromMillis((2 * 60 * 60 * 1000))
             authenticate(data.access_token)
             const body = {
               ...data,
@@ -34,9 +33,9 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               clientId,
               clientSecret,
               updatedAt: now,
-              expiredAt: now.toMillis() + gapTime.toMillis()
+              expiredAt: Timestamp.fromMillis(now.toMillis() + (2 * 60 * 60 * 1000))
             }
-            console.log('>>> expiredAt: ', body.expiredAt.toDate(), ' ', now.toDate(), ' ', gapTime.toMillis())
+            console.log('>>> expiredAt: ', body.expiredAt.toDate(), ' ', now.toDate(), ' ')
             if (code) {
               body.code = code
             }
@@ -52,7 +51,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
         .then((documentSnapshot) => {
           const expiredAt = documentSnapshot.get('expiredAt')
           if (documentSnapshot.exists &&
-            now + Timestamp.fromMillis(tokenExpirationGap) < expiredAt.toMillis() // token expires in 21600 s
+            Timestamp.fromMillis(now.toMillis() + tokenExpirationGap) < expiredAt.toMillis() // token expires in 21600 s
           ) {
             authenticate(documentSnapshot.get('access_token'))
           } else {
