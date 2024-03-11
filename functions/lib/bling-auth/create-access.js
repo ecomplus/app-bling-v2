@@ -33,9 +33,9 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               clientId,
               clientSecret,
               updatedAt: now,
-              expiredAt: Timestamp.fromMillis(now + 7200)
+              expiredAt: now.toMillis() + (2 * 60 * 60 * 1000)
             }
-            console.log('>>> expiredAt: ', body.expiredAt, ' ', now, ' ', now + 7200)
+            console.log('>>> expiredAt: ', body.expiredAt.toDate(), ' ', now.toDate(), ' ')
             if (code) {
               body.code = code
             }
