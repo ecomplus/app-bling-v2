@@ -1,13 +1,13 @@
 const createAxios = require('./create-axios')
 const auth = require('./create-auth')
-const { getFirestore, Timestamp } = require('firebase-admin/firestore')
+const { Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
 module.exports = function (clientId, clientSecret, code, storeId, tokenExpirationGap = 9000) {
   const self = this
 
   let documentRef
-  const now = Timestamp.now().toMillis()
+  const now = Timestamp.now()
   if (firestoreColl) {
     documentRef = require('firebase-admin')
       .firestore()
@@ -33,8 +33,8 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               storeId,
               clientId,
               clientSecret,
-              updatedAt: Timestamp.now(),
-              expiredAt: Timestamp.fromMillis(now + (7200 * 1000))
+              updatedAt: now,
+              expiredAt: Timestamp.fromMillis(now + 7200)
             }).catch(console.error)
           }
         })
