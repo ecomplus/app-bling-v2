@@ -45,13 +45,15 @@ module.exports = async () => {
       ? maxDocs
       : (docs && docs.length) || 0
     console.log('max existed docs', maxExistedDocs)
+    const promises = []
     if (maxExistedDocs) {
       for (let i = 0; i < maxExistedDocs; i++) {
         const docRef = docs[i]
         if (docRef.data()?.storeId) {
-          handleAuth(docRef)
+          promises.push(handleAuth(docRef))
         }
       }
     }
+    await Promise.all(promises)
   }
 }
