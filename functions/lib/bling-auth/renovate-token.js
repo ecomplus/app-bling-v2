@@ -2,7 +2,7 @@ const auth = require('./create-auth')
 const { getFirestore, Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
-const lastTimeUpdate = 1 * 5 * 60 * 1000
+const lastTimeUpdate = 2 * 60 * 60 * 1000
 
 module.exports = async () => {
   const maxDocs = 15
@@ -16,7 +16,7 @@ module.exports = async () => {
       refresh_token: refreshToken,
       storeId
     } = doc
-    console.log('> Renove Token Bling ', storeId, JSON.stringify(doc))
+    console.log('> Renove Token Bling ', storeId)
     const data = await auth(clientId, clientSecret, null, storeId, refreshToken)
     console.log('> Bling new token => ', JSON.stringify(data))
     if (document.ref) {
@@ -33,11 +33,12 @@ module.exports = async () => {
 
   if (firestoreColl) {
     const db = getFirestore()
-    const lastDate = Timestamp.fromMillis(now.toMillis() - lastTimeUpdate)
-    console.log('> ExpiredAt <= ', lastDate.toDate())
+    const lastDateUpdate = Timestamp.fromMillis(now.toMillis() - 2 * lastTimeUpdate)
+    const nextDateUpdate = Timestamp.fromMillis(now.toMillis() + lastTimeUpdate)
+    console.log('> ExpiredAt >=', lastDateUpdate.toDate(), ' < ', nextDateUpdate.toDate())
     const documentSnapshot = await db.collection(firestoreColl)
-      .where('expiredAt', '<', Timestamp.fromMillis(now.toMillis() + 1 * 60 * 1000))
-      .where('expiredAt', '>=', lastDate)
+      .where('expiredAt', '<', nextDateUpdate)
+      .where('expiredAt', '>=', lastDateUpdate) // Discard probable deactivateDd tokens
       .orderBy('expiredAt')
       .get()
 

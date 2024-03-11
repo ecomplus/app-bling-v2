@@ -3,6 +3,8 @@ const auth = require('./create-auth')
 const { Timestamp } = require('firebase-admin/firestore')
 
 const firestoreColl = 'bling_tokens'
+const nextTimeUpdate = 2 * 60 * 60 * 1000
+
 module.exports = function (clientId, clientSecret, code, storeId, tokenExpirationGap = 9000) {
   const self = this
 
@@ -33,7 +35,7 @@ module.exports = function (clientId, clientSecret, code, storeId, tokenExpiratio
               clientId,
               clientSecret,
               updatedAt: now,
-              expiredAt: Timestamp.fromMillis(now.toMillis() + (1 * 5 * 60 * 1000))
+              expiredAt: Timestamp.fromMillis(now.toMillis() + nextTimeUpdate)
             }
 
             if (code) {
