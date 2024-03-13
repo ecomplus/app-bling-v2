@@ -1,4 +1,4 @@
-const Bling = require('../../bling-auth/create-access')
+const blingAxios = require('../../bling-auth/create-access')
 
 const parsePayment = (method) => {
   switch (method) {
@@ -22,22 +22,27 @@ const parsePayment = (method) => {
 }
 
 const getPaymentMethod = async (appData, storeId, paymentMethod) => {
-  const { client_id, client_secret, code } = appData
-  const bling = new Bling(client_id, client_secret, code, storeId)
+  const {
+    client_id: clientId,
+    client_secret: clientSecret
+  } = appData
+  const bling = await blingAxios(clientId, clientSecret, storeId)
   const numberMethod = parsePayment(paymentMethod)
   const methodPayment = await bling.get(`/formas-pagamentos?tiposPagamentos[${numberMethod}]`)
   return methodPayment && methodPayment.data && methodPayment.data.data
 }
 
-const postPaymentMethod = async (appData, storeId, body) => {
-  const { client_id, client_secret, code } = appData
-  const bling = new Bling(client_id, client_secret, code, storeId)
+const postPaymentMethod = async (appData, storeId, paymentMethod, body) => {
+  const {
+    client_id: clientId,
+    client_secret: clientSecret
+  } = appData
+  const bling = await blingAxios(clientId, clientSecret, storeId)
   const numberMethod = parsePayment(paymentMethod)
   body.tipoPagamento = numberMethod
-  const methodPayment = await bling.post(`/formas-pagamentos`, body)
+  const methodPayment = await bling.post('/formas-pagamentos', body)
   return methodPayment && methodPayment.data && methodPayment.data.data
 }
-
 
 module.exports = {
   getPaymentMethod,

@@ -1,4 +1,3 @@
-
 const PubSub = require('@google-cloud/pubsub').PubSub
 const getPubSubTopic = require('../../lib/pubsub/create-topic').getPubSubTopic
 

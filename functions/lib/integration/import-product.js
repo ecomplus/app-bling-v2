@@ -1,13 +1,13 @@
 const { firestore } = require('firebase-admin')
 const ecomClient = require('@ecomplus/client')
-const Bling = require('../bling-auth/create-access')
+const blingAxios = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-ecomplus')
 const { getCategories } = require('./services/categories')
 const handleJob = require('./handle-job')
 
-module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSecret, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
+module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
   const [sku, productId] = String(queueEntry.nextId).split(';:')
-  const { client_id, client_secret, code } = appData
+  const { client_id: clientId, client_secret: clientSecret } = appData
   let blingProductCode = sku
 
   return new Promise((resolve, reject) => {
@@ -17,7 +17,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
     }
 
     firestore().collection('bling_stock_updates')
-      .where('ref', '==', `${storeId}_${blingClientId}_${sku}`)
+      .where('ref', '==', `${storeId}_${clientId}_${sku}`)
       .get()
       .then(querySnapshot => {
         let blingStockUpdate, lastUpdateTime
@@ -41,18 +41,18 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
     .then(blingStockUpdate => {
       const findingProduct = productId
         ? ecomClient.store({
-            storeId,
-            url: `/products/${productId}.json`
+          storeId,
+          url: `/products/${productId}.json`
+        })
+          .then(({ data }) => data)
+          .catch(err => {
+            if (err.response && err.response.status >= 400 && err.response.status < 500) {
+              console.log(`#${storeId} ${productId} => ${err.response.status}`)
+              return null
+            }
+            console.error(err)
+            throw err
           })
-            .then(({ data }) => data)
-            .catch(err => {
-              if (err.response && err.response.status >= 400 && err.response.status < 500) {
-                console.log(`#${storeId} ${productId} => ${err.response.status}`)
-                return null
-              }
-              console.error(err)
-              throw err
-            })
 
         : ecomClient.search({
           storeId,
@@ -110,7 +110,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
           return { product, hasVariations }
         })
 
-        .then(payload => {
+        .then(async payload => {
           const dispatchNullJob = () => handleJob({ appSdk, storeId }, queueEntry, Promise.resolve(null))
           if (!payload && !appData.import_product) {
             console.log(`#${storeId} not found ${sku}`)
@@ -118,7 +118,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
             return payload
           }
           const { product, variationId, hasVariations } = payload
-          const blingAxios = new Bling(client_id, client_secret, code, storeId)
+          const bling = await blingAxios(clientId, clientSecret, storeId)
 
           if (!product && (isHiddenQueue || productId) && !appData.import_product) {
             dispatchNullJob()
@@ -195,7 +195,7 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
                   product.quantity = quantity >= 0 ? quantity : 0
                 }
                 console.log(`#${storeId} ${method} ${endpoint}`)
-                
+
                 return appSdk.apiRequest(storeId, endpoint, method, product, auth)
               })
           }
@@ -205,37 +205,31 @@ module.exports = async ({ appSdk, storeId, auth }, blingClientId, blingClientSec
           if (blingStockUpdate && isHiddenQueue && !appData.update_product_auto && !appData.import_product) {
             job = handleBlingStock(blingStockUpdate, true)
           } else {
-            return blingAxios.preparing
-              .then(() => {
-                const bling = blingAxios.axios
-                job = bling.get('/produtos', {
-                  params: {
-                    codigo: sku
-                  }
-                }).then(({data}) => {
-                  const responseData = data && data.data
-                  if (responseData && Array.isArray(responseData) && responseData.length) {
-                    const blingProduct = responseData.find(({ codigo }) => blingProductCode === String(codigo))
-                    if (blingProduct) {
-                      return blingAxios.preparing
-                        .then(() => {
-                        const blingRequest = blingAxios.axios})
-                        blingRequest.get(`/produtos/${blingProduct.id}`).then((res) => {
-                        const blingData = res.data && res.data.data
-                        if (blingData) {
-                          console.log('Produto bling', JSON.stringify(blingData))
-                          return handleBlingStock(blingData)
-                        }
-                      })
-                    }
-                  }
-                  console.log('the returned product is:', data.data)
-                  const msg = `SKU ${sku} não encontrado no Bling`
-                  const err = new Error(msg)
-                  err.isConfigError = true
-                  throw new Error(err)
-                })
-              })
+            job = bling.get('/produtos', {
+              params: {
+                codigo: sku
+              }
+            }).then(({ data }) => {
+              const responseData = data && data.data
+              if (responseData && Array.isArray(responseData) && responseData.length) {
+                const blingProduct = responseData.find(({ codigo }) => blingProductCode === String(codigo))
+                if (blingProduct) {
+                  bling.get(`/produtos/${blingProduct.id}`)
+                    .then((res) => {
+                      const blingData = res.data && res.data.data
+                      if (blingData) {
+                        console.log('Produto bling', JSON.stringify(blingData))
+                        return handleBlingStock(blingData)
+                      }
+                    })
+                }
+              }
+              console.log('the returned product is:', data.data)
+              const msg = `SKU ${sku} não encontrado no Bling`
+              const err = new Error(msg)
+              err.isConfigError = true
+              throw new Error(err)
+            })
           }
 
           handleJob({ appSdk, storeId }, queueEntry, job)

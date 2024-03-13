@@ -1,7 +1,7 @@
 const ecomUtils = require('@ecomplus/utils')
 const ecomClient = require('@ecomplus/client')
 const errorHandling = require('../store-api/error-handling')
-const Bling = require('../bling-auth/create-access')
+const blingAxios = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-bling')
 const handleJob = require('./handle-job')
 
@@ -31,9 +31,7 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
         blingProductCode = product.sku
       }
       // Bling Requests
-      const blingAxios = new Bling(clientId, clientSecret, undefined, storeId)
-      await blingAxios.preparing
-      const bling = blingAxios.axios
+      const bling = await blingAxios(clientId, clientSecret, storeId)
 
       const job = bling.get('/produtos', {
         params: {

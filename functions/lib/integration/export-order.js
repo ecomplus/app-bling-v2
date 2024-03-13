@@ -2,7 +2,7 @@
 
 const ecomUtils = require('@ecomplus/utils')
 const errorHandling = require('../store-api/error-handling')
-const Bling = require('../bling-auth/create-access')
+const blingAxios = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-bling/')
 const parseStatus = require('./parsers/order-to-bling/status')
 const handleJob = require('./handle-job')
@@ -10,9 +10,13 @@ const url = require('url')
 
 module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const orderId = queueEntry.nextId
-  const { client_id, client_secret, code, bling_store } = appData
+  const {
+    client_id: clientId,
+    client_secret: clientSecret,
+    bling_store: appDataBlingStore
+  } = appData
   return appSdk.apiRequest(storeId, `/orders/${orderId}.json`, 'GET', null, auth)
-    .then(({ response }) => {
+    .then(async ({ response }) => {
       const order = response.data
       const logHead = `#${storeId} ${orderId} `
       if (!order.financial_status) {
@@ -36,10 +40,10 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
       }
       const urlParams = {
         number: order.number,
-        idLoja: bling_store || blingStore
+        idLoja: appDataBlingStore || blingStore
       }
       const params = new url.URLSearchParams(urlParams)
-      const bling = new Bling(client_id, client_secret, code, storeId)
+      const bling = await blingAxios(clientId, clientSecret, storeId)
       const job = bling.get(`/pedidos/vendas/${hasCreatedBlingOrder ? (blingOrderNumber) : `?${params.toString()}`}`)
         .catch(err => {
           if (err.response && err.response.status === 404) {
@@ -52,7 +56,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
           const hasFoundByNumber = Boolean(Array.isArray(data) && data.length)
           let originalBlingOrder
           if (hasFoundByNumber) {
-            originalBlingOrder = data.find(( pedido ) => {
+            originalBlingOrder = data.find((pedido) => {
               if (String(order.number) === pedido.numeroLoja) {
                 return !blingStore || (String(blingStore) === String(pedido.loja && pedido.loja.id))
               }

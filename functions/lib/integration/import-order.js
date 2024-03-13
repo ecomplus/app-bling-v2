@@ -1,5 +1,5 @@
 const { firestore } = require('firebase-admin')
-const Bling = require('../bling-auth/create-access')
+const blingAxios = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-ecomplus/')
 const parseStatus = require('./parsers/order-to-ecomplus/status')
 const handleJob = require('./handle-job')
@@ -14,10 +14,13 @@ const getLastStatus = records => {
   return statusRecord && statusRecord.status
 }
 
-module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposit, queueEntry, appData) => {
+module.exports = async ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDeposit, queueEntry, appData) => {
   const blingOrderNumber = queueEntry.nextId
-  const { client_id, client_secret, code } = appData
-  const bling = new Bling(client_id, client_secret, code, storeId)
+  const {
+    client_id: clientId,
+    client_secret: clientSecret
+  } = appData
+  const bling = await blingAxios(clientId, clientSecret, storeId)
 
   const job = bling.get(`/pedido/${blingOrderNumber}`)
     .then(({ data }) => {
@@ -53,10 +56,10 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
             if (!result.length) {
               return null
             }
-            const order = result[0] 
+            const order = result[0]
             return parseOrder(blingOrder, order.shipping_lines, bling, storeId).then(partialOrder => {
               const promises = []
-              if (partialOrder && Object.keys(partialOrder).length) { 
+              if (partialOrder && Object.keys(partialOrder).length) {
                 promises.push(appSdk
                   .apiRequest(storeId, `/orders/${order._id}.json`, 'PATCH', partialOrder, auth))
               }

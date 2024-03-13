@@ -1,68 +1,51 @@
 const createAxios = require('./create-axios')
-const auth = require('./create-auth')
+const blingAuth = require('./create-auth')
 const { Timestamp } = require('firebase-admin/firestore')
+const logger = console
 
 const firestoreColl = 'bling_tokens'
-const nextTimeUpdate = 2 * 60 * 60 * 1000
 
-module.exports = function (clientId, clientSecret, code, storeId, tokenExpirationGap = 9000) {
-  const self = this
-
-  let documentRef
-  const now = Timestamp.now()
+module.exports = async function (clientId, clientSecret, storeId, tokenExpirationGap = 9000) {
+  let docRef
   if (firestoreColl) {
-    documentRef = require('firebase-admin')
+    docRef = require('firebase-admin')
       .firestore()
       .doc(`${firestoreColl}/${storeId}`)
   }
+  const docSnapshot = await docRef.get()
+  let accessToken
+  if (docSnapshot.exists) {
+    const {
+      access_token: docAccessToken,
+      refresh_token: refreshToken,
+      expiredAt
+    } = docSnapshot.data()
 
-  this.preparing = new Promise((resolve, reject) => {
-    const authenticate = (token) => {
-      self.axios = createAxios(token)
-      resolve(self)
-    }
-
-    const handleAuth = (clientId, clientSecret, code, storeId, refreshToken) => {
-      console.log('> Bling Auth02 ', storeId)
-      auth(clientId, clientSecret, code, storeId, refreshToken)
-        .then(async (data) => {
-          console.log('> Bling token => ', JSON.stringify(data))
-          if (documentRef) {
-            authenticate(data.access_token)
-            const body = {
-              ...data,
-              storeId,
-              clientId,
-              clientSecret,
-              updatedAt: now,
-              expiredAt: Timestamp.fromMillis(now.toMillis() + nextTimeUpdate)
-            }
-
-            if (code) {
-              body.code = code
-            }
-
-            documentRef.set(body, { merge: true }).catch(console.error)
-          }
-        })
-        .catch(reject)
-    }
-
-    if (documentRef && !code) {
-      documentRef.get()
-        .then((documentSnapshot) => {
-          const expiredAt = documentSnapshot.get('expiredAt')
-          if (documentSnapshot.exists &&
-            Timestamp.fromMillis(now.toMillis() + tokenExpirationGap) < expiredAt.toMillis() // token expires in 21600 s
-          ) {
-            authenticate(documentSnapshot.get('access_token'))
-          } else {
-            handleAuth(clientId, clientSecret, code, storeId, documentSnapshot.get('refresh_token'))
-          }
-        })
-        .catch(console.error)
+    const now = Timestamp.now()
+    if (now.toMillis() + tokenExpirationGap < expiredAt.toMillis()) {
+      accessToken = docAccessToken
     } else {
-      handleAuth(clientId, clientSecret, code, storeId)
+      try {
+        const { data } = await blingAuth(clientId, clientSecret, null, storeId, refreshToken)
+        docRef.set({
+          ...data,
+          updatedAt: now,
+          expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000))
+        }, { merge: true })
+        accessToken = data.access_token
+      } catch (err) {
+        logger.warn('Cant refresh Bling OAtuh token', {
+          url: err.config.url,
+          body: err.config.data,
+          response: err.response.data,
+          status: err.response.status
+        })
+        throw err
+      }
     }
-  })
+  } else {
+    throw Error('No Bling token document')
+  }
+
+  return createAxios(accessToken)
 }

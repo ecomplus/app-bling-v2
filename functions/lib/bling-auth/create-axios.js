@@ -4,25 +4,28 @@ module.exports = (accessToken, clientId, clientSecret) => {
   let headers = {
   }
 
+  console.log('>>> Request with ', accessToken ? ` token: ${accessToken}` : 'Basic Auth', ` ${new Date().toISOString()}`)
   const baseURL = 'https://www.bling.com.br/Api/v3'
   if (accessToken) {
-    console.log('> token ', accessToken)
     headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`
     }
   } else if (clientId && clientSecret) {
-    console.log('> client id ', clientId, '>> client secret', clientSecret)
+    console.log('> client id ', clientId, ' client secret', clientSecret, ' <')
     headers = {
       Accept: '1.0',
       Authorization: 'Basic ' +
         Buffer.from(`${clientId}:${clientSecret}`, 'utf8').toString('base64')
     }
   }
-
-  return axios.create({
+  const body = {
     baseURL,
-    timeout: 10000,
     headers
-  })
+  }
+  if (!accessToken) {
+    body.timeout = 6000
+  }
+
+  return axios.create(body)
 }

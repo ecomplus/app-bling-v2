@@ -1,14 +1,14 @@
 const updateAppData = require('../../../lib/store-api/update-app-data')
-const Bling = require('../../../lib/bling-auth/create-access.js')
+const createAxios = require('../../../lib/bling-auth/create-axios')
 
-exports.get = ({ appSdk, admin }, req, res) => {
+exports.get = async ({ appSdk, admin }, req, res) => {
   const { storeId } = req
-  const blingClientId = req.query.clientId
+  const blingToken = req.query.bling_token
   const blingStore = req.query.bling_store
   const blingOffsetPage = parseInt(req.query.bling_offset_page, 10) || 1
 
   if (typeof blingToken === 'string' && blingToken) {
-    const bling = new Bling(blingClientId, undefined, undefined, storeId)
+    const bling = createAxios(blingToken)
     let countBlingReqs = 0
     const skus = []
 

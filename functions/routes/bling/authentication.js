@@ -1,6 +1,8 @@
 const getAppData = require('./../../lib/store-api/get-app-data')
-const Bling = require('../../lib/bling-auth/create-access')
+const { getFirestore, Timestamp } = require('firebase-admin/firestore')
+const blingAuth = require('../../lib/bling-auth/create-auth')
 
+const firestoreColl = 'bling_tokens'
 exports.get = async ({ appSdk, admin }, req, res) => {
   console.log('>> GET  BLING')
   const { query } = req
@@ -13,10 +15,16 @@ exports.get = async ({ appSdk, admin }, req, res) => {
         try {
           getAppData({ appSdk, storeId, auth })
             .then(async (appData) => {
-              const { client_id: clienteId, client_secret: clientSecret } = appData
-              console.log('Pass variables', JSON.stringify({ clienteId, clientSecret, code, storeId }))
-              const bling = new Bling(clienteId, clientSecret, code, storeId)
-              await bling.preparing
+              const { client_id: clientId, client_secret: clientSecret } = appData
+              console.log('Pass variables', JSON.stringify({ clientId, clientSecret, code, storeId }))
+              const { data } = await blingAuth(clientId, clientSecret, code, storeId)
+              const now = Timestamp.now()
+              await getFirestore().doc(`${firestoreColl}/${storeId}`).set({
+                ...data,
+                expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000)),
+                createdAt: now
+              })
+
               return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
             })
         } catch (error) {
