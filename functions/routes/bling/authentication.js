@@ -17,7 +17,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
             .then(async (appData) => {
               const { client_id: clientId, client_secret: clientSecret } = appData
               console.log('Pass variables', JSON.stringify({ clientId, clientSecret, code, storeId }))
-              const { data } = await blingAuth(clientId, clientSecret, code, storeId)
+              const data = await blingAuth(clientId, clientSecret, code, storeId)
               const now = Timestamp.now()
               await getFirestore().doc(`${firestoreColl}/${storeId}`).set({
                 ...data,

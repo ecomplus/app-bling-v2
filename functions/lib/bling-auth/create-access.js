@@ -26,7 +26,7 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
       accessToken = docAccessToken
     } else {
       try {
-        const { data } = await blingAuth(clientId, clientSecret, null, storeId, refreshToken)
+        const data = await blingAuth(clientId, clientSecret, null, storeId, refreshToken)
         docRef.set({
           ...data,
           updatedAt: now,
