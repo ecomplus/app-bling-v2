@@ -146,7 +146,7 @@ const tryImageUpload = (storeId, auth, originImgUrl, product) => new Promise(res
 })
 
 module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData) => new Promise((resolve, reject) => {
-  const sku = blingProduct.codigo
+  const sku = blingProduct.codigo || String(blingProduct.id)
   const name = (blingProduct.nome || sku).trim()
 
   const product = {
@@ -233,8 +233,8 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
 
   if (Array.isArray(blingProduct.variacoes) && blingProduct.variacoes.length) {
     product.variations = variations || []
-    blingProduct.variacoes.forEach(({ variacao }) => {
-      if (variacao.variacao && variacao.variacao.nome) {
+    blingProduct.variacoes.forEach(variacao => {
+      if (variacao && variacao.nome) {
         const gridsAndValues = variacao.variacao.nome.split(';')
         if (gridsAndValues.length) {
           const specifications = {}
@@ -266,7 +266,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
           })
 
           if (specTexts.length) {
-            const { midia, codigo, preco, gtin, gtinEmbalagem, dimensoes, pesoBruto, pesoLiq, tributacao } = variacao
+            const { midia, codigo, preco, gtin, gtinEmbalagem, dimensoes, pesoBruto, pesoLiq, tributacao, id } = variacao
             let pictureId = 0
             if (midia && midia.imagens && Array.isArray(midia.imagens.externas) && midia.imagens.externas.length) {
               pictureId = midia.imagens.externas.length
@@ -288,11 +288,11 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
               product.variations.push(variation)
             }
             variation.name = `${name} / ${specTexts.join(' / ')}`.substring(0, 100)
-            variation.sku = codigo
+            variation.sku = codigo || String(id)
             variation.specifications = specifications
             variation.quantity = 0
             if (pictureId > 0) {
-              variation.pictureId = pictureId
+              variation.picture_id = pictureId
             }
             const price = parseFloat(preco)
             if (price) {
