@@ -59,6 +59,7 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
           }
           if (canCreateNew || appData.export_quantity || !blingStore) {
             const blingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
+            console.log('produtos', JSON.stringify(blingProduct))
             if (blingProduct) {
               const endpoint = originalBlingProduct ? `/produtos/${blingProductId}` : '/produtos'
               if (originalBlingProduct) {

@@ -62,6 +62,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const resourceId = trigger.resource_id || trigger.inserted_id
 
   // get app configured options
+  console.log('resource id', resourceId)
   if (!handlingIds.includes(resourceId)) {
     handlingIds.push(resourceId)
 
@@ -94,7 +95,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               if (trigger.resource === 'applications') {
                 integrationConfig = appData
                 canCreateNew = true
-              } /* else if (trigger.authentication_id !== auth.myId) {
+              } else if (trigger.authentication_id !== auth.myId) {
                 switch (trigger.resource) {
                   case 'orders':
                     if (false) {
@@ -129,7 +130,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                     break
                 }
               }
-              // */
+              console.log('integration config', JSON.stringify(integrationConfig))
               if (integrationConfig) {
                 const actions = Object.keys(integrationHandlers)
                 actions.forEach(action => {
