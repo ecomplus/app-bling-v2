@@ -45,6 +45,13 @@ const removeAccents = str => str.replace(/áàãâÁÀÃÂ/g, 'a')
       case 'laranja':
       case 'laranjao':
         return '#ffa500';
+      case 'muffin':
+        return '#d6a78a';
+      case 'off':
+      case 'offwhite':
+      case 'off-white':
+      case 'off white':
+        return '#fffafa';
       case 'marrom':
         return '#a52a2a';
       case 'areia':
@@ -168,8 +175,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
     }
   }
 
-  const { loja } = blingProduct
-  if (loja && blingProduct.preco) {
+  if (blingProduct.preco) {
     if (blingProduct.precoPromocional) {
       product.price = Number(blingProduct.precoPromocional)
       product.base_price = Number(blingProduct.preco)
@@ -265,17 +271,35 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
             }
           })
 
+          // Helper function to extract base URL (ignoring query parameters)
+        function getBaseUrl(url) {
+            const urlObj = new URL(url);
+            return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`;
+        }
+
+        // Helper function to update externas while avoiding duplicates
+        function updateExternas(newMedia) {
+            const existingLinks = new Set(blingProduct.midia.imagens.externas.map(item => getBaseUrl(item.link)));
+
+            newMedia.midia.imagens.externas.forEach(({ link }) => {
+                let baseUrl = getBaseUrl(link);
+                if (!existingLinks.has(baseUrl)) {
+                    blingProduct.midia.imagens.externas.push({ link });
+                    existingLinks.add(baseUrl); // Add base URL to set to keep track of what has been added
+                }
+            });
+        }
+
           if (specTexts.length) {
             const { midia, codigo, preco, gtin, gtinEmbalagem, dimensoes, pesoBruto, pesoLiq, tributacao, id } = variacao
             let pictureId = 0
             if (midia && midia.imagens && Array.isArray(midia.imagens.externas) && midia.imagens.externas.length) {
-              pictureId = midia.imagens.externas.length
-              midia.imagens.externas.forEach(({link}) => blingProduct.midia.imagens.externas.push({
-                link
-              }))
+                midia.imagens.externas.forEach(({link}) => updateExternas({link}))
+                pictureId = midia.imagens.externas.length - 1
+              
             }
             let variation
-            if (variations) {
+            if (variations && variations.length) {
               const variationIndex = variations.findIndex(({ sku }) => sku === variacao.codigo)
               if (variationIndex > -1) {
                 variation = variations[variationIndex]
@@ -295,7 +319,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
               variation.picture_id = pictureId
             }
             const price = parseFloat(preco)
-            if (price) {
+            if (price && preco !== blingProduct.preco) {
               variation.price = price
             }
             if (validateGtin(gtin)) {
@@ -363,6 +387,6 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
       }
       return resolve(product)
     })
-  }
+  } 
   resolve(product)
 })
