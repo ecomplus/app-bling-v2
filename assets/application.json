@@ -309,6 +309,94 @@
       },
       "hide": true
     },
+    "parse_status": {
+      "schema": {
+        "type": "array",
+        "title": "Correspondência de atualização de status",
+        "description": "Poderá criar correspondências exatas de status de acordo com a sua necessidade",
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "properties": {
+            "status_ecom": {
+              "title": "Status E-Com Plus",
+              "enum": [
+                "Pendente",
+                "Em análise",
+                "Autorizado",
+                "Não autorizado",
+                "Parte pago",
+                "Pago",
+                "Disputa",
+                "Parte devolvido",
+                "Devolvido",
+                "Cancelado",
+                "Em produção",
+                "Em separação",
+                "Pronto para envio",
+                "NF emitida",
+                "Enviado",
+                "Parte enviado",
+                "Parte entregue",
+                "Entregue",
+                "Retorno e troca",
+                "Aguardando troca"
+              ]
+            },
+            "status_bling": {
+              "type": "number",
+              "title": "Número do status",
+              "description": "Cada status no bling corresponde a um número, basta buscar esse número e realizar a correspondência"
+            }
+          }
+        }
+      },
+      "hide": false
+    },
+    "parse_payment": {
+      "schema": {
+        "type": "array",
+        "title": "Correspondência de formas de pagamento",
+        "description": "Poderá criar correspondências exatas entre formas de pagamento da plataforma e Bling",
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "properties": {
+            "ecom_payment": {
+              "title": "Rótulo da forma de pagamento na E-Com Plus",
+              "type": "string"
+            },
+            "bling_payment": {
+              "type": "number",
+              "title": "Id da forma de pagamento correspondente no Bling"
+            }
+          }
+        }
+      },
+      "hide": false
+    },
+    "parse_shipping": {
+      "schema": {
+        "type": "array",
+        "title": "Correspondência de formas de envio",
+        "description": "Poderá criar correspondências exatas entre formas de envio da plataforma e Bling",
+        "uniqueItems": true,
+        "items": {
+          "type": "object",
+          "properties": {
+            "ecom_shipping": {
+              "title": "Rótulo da forma de envio na E-Com Plus",
+              "type": "string"
+            },
+            "bling_shipping": {
+              "type": "number",
+              "title": "Id da forma de envio correspondente no Bling"
+            }
+          }
+        }
+      },
+      "hide": false
+    },
     "logs": {
       "schema": {
         "title": "Logs",
