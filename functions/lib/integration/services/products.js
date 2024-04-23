@@ -21,6 +21,16 @@ const getProduct = async (appData, storeId, id) => {
   return blingProduct && blingProduct.data && blingProduct.data.data
 }
 
+const getStock = async (appData, storeId, id) => {
+  const {
+    client_id: clientId,
+    client_secret: clientSecret
+  } = appData
+  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const blingProduct = await bling.get(`/estoques/saldos?idsProdutos%5B%5D=${id}`)
+  return blingProduct && blingProduct.data && blingProduct.data.data
+}
+
 const updateProduct = async (appData, storeId, id, body) => {
   const {
     client_id: clientId,
@@ -76,6 +86,7 @@ const listProductStore = async (appData, storeId) => {
 
 module.exports = {
   getProduct,
+  getStock,
   listProductStore,
   listSpecificProductStore,
   searchProduct,
