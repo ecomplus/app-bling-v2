@@ -1,5 +1,6 @@
 // read configured E-Com Plus app data
 const getAppData = require('../../lib/store-api/get-app-data')
+const blingAuth = require('../../lib/bling-auth/create-access')
 const { baseUri, operatorToken } = require('./../../__env')
 
 // async integration handlers
@@ -82,9 +83,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             }
 
             /* DO YOUR CUSTOM STUFF HERE */
+            const blingClientId = appData.client_id
+            const blingClientSecret = appData.client_secret
+            const bling = await blingAxios(blingClientId, blingClientSecret, storeId)
             console.log(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
 
-            const blingClientId = appData.client_id
+            
             // const blingClientSecret = appData.client_secret
             const blingStore = appData.bling_store
             const blingDeposit = appData.bling_deposit

@@ -100,7 +100,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
   }
   if (product.pictures && product.pictures.length) {
     blingProduct.imagens = {
-      externas = []
+      externas: []
     }
     product.pictures.forEach(({ zoom, big, normal }) => {
       const img = (zoom || big || normal)
