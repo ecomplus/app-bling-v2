@@ -397,6 +397,7 @@ const app = {
           properties: {
             status_ecom: {
               title: 'Status E-Com Plus',
+              type: 'string',
               enum: [
                 'Pendente',
                 'Em análise',
