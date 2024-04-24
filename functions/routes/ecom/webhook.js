@@ -71,7 +71,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       .then((auth) => {
         // eslint-disable-next-line promise/no-nesting
         return getAppData({ appSdk, storeId, auth })
-          .then(appData => {
+          .then(async appData => {
             if (
               Array.isArray(appData.ignore_triggers) &&
               appData.ignore_triggers.indexOf(trigger.resource) > -1
