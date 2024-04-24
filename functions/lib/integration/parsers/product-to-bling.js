@@ -10,7 +10,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
     situacao: product.available && product.visible ? 'A' : 'I',
     formato: hasVariations ? 'V' : 'S',
     preco: ecomUtils.price(product),
-    descricaoCurta: product.body_html || product.short_description,
+    descricaoCurta: product.body_html || product.short_description || product.body_text,
     descricaoComplementar: product.short_description,
     unidade: originalBlingProduct && originalBlingProduct.unidade
       ? originalBlingProduct.unidade
@@ -30,18 +30,6 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
   if (product.min_quantity) {
     blingProduct.itensPorCaixa = product.min_quantity
   }
-
-  const description = product.body_text || product.body_html
-  if (description) {
-    if (!blingProduct.descricaoCurta) {
-      blingProduct.descricaoCurta = description
-    } else {
-      blingProduct.descricaoComplementar = description
-    }
-  } else if (!blingProduct.descricaoCurta) {
-    blingProduct.descricaoCurta = product.name
-  }
-
 
   if (product.mpn && product.mpn.length) {
     blingProduct.tributacao = {
@@ -83,29 +71,30 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
       }
     }
     if (Object.keys(blingProductDimensoes).length) {
-      blingProductDimensoes.unidadeMedida = dimensionUnit || 1
+      blingProductDimensoes.unidadeMedida = 1
       blingProduct.dimensoes = blingProductDimensoes
     }
   }
-
+  blingProduct.midia = {
+  }
   if (product.brands && product.brands.length) {
     blingProduct.marca = product.brands[0].name
   }
   if (product.videos && product.videos.length && product.videos[0].url) {
-    blingProduct.midia = {
-      videos: {
-        url: product.videos[0].url
-      }
+     blingProduct.midia.video = {
+      url: product.videos[0].url
     }
   }
   if (product.pictures && product.pictures.length) {
-    blingProduct.imagens = {
-      externas: []
+    blingProduct.midia.imagens = {
+      externas: [],
+      internas: []
     }
     product.pictures.forEach(({ zoom, big, normal }) => {
       const img = (zoom || big || normal)
+      
       if (img) {
-        blingProduct.imagens.externas.push({ link: img.url })
+        blingProduct.midia.imagens.externas.push({ link: img.url })
       }
     })
   }
@@ -166,7 +155,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
           }
         }
         if (Object.keys(blingVationDimensoes).length) {
-          blingVationDimensoes.unidadeMedida = variationDimensionUnit || 1
+          blingVationDimensoes.unidadeMedida = 1
           blingVariation.dimensoes = blingVationDimensoes
         }
       }
