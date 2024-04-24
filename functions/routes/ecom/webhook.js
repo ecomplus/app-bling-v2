@@ -1,6 +1,6 @@
 // read configured E-Com Plus app data
 const getAppData = require('../../lib/store-api/get-app-data')
-const blingAuth = require('../../lib/bling-auth/create-access')
+const blingAxios = require('../../lib/bling-auth/create-access')
 const { baseUri, operatorToken } = require('./../../__env')
 
 // async integration handlers
