@@ -31,15 +31,19 @@ const parseAddress = (address, blingAddress, blingCityField = 'cidade') => {
 }
 
 module.exports = (order, blingOrderNumber, blingStore, appData, storeId) => {
+
+  const { parse_payment, parse_shipping, parse_status } = appData
   const blingOrder = {
-    numero_loja: String(order.number),
-    data: formatDate(new Date(order.opened_at || order.created_at))
+    numeroLoja: String(order.number),
+    data: (order.opened_at || order.created_at).substring(0, 10)
   }
-  if (blingOrderNumber && !appData.disable_order_number) {
-    blingOrder.numero = String(blingOrderNumber)
+  if (order.number && !appData.disable_order_number) {
+    blingOrder.numero = order.number
   }
   if (blingStore) {
-    blingOrder.loja = Number(blingStore)
+    blingOrder.loja = {
+      id: Number(blingStore)
+    }
   }
 
   const { amount } = order
@@ -179,11 +183,23 @@ module.exports = (order, blingOrderNumber, blingStore, appData, storeId) => {
     }
   }
   if (amount.discount) {
-    blingOrder.vlr_desconto = amount.discount
+    blingOrder.desconto = {
+      valor: amount.discount,
+      unidade: 'REAL'
+    }
+  }
+  if (amount.balance) {
+    if (!(blingOrder.desconto && blingOrder.desconto.valor)) {
+      blingOrder.desconto = {
+        valor: 0,
+        unidade: 'REAL'
+      }
+    }
+    blingOrder.desconto.valor += amount.balance
   }
 
   if (order.notes) {
-    blingOrder.obs = order.notes 
+    blingOrder.observacoes = order.notes 
   }
   if (!blingOrder.obs && notesForCustomization.length) {
     blingOrder.obs = notesForCustomization
