@@ -7,6 +7,7 @@ const handleJob = require('./handle-job')
 
 module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const productId = queueEntry.nextId
+  console.log('>> export products to bling ', productId)
   const { client_id: clientId, client_secret: clientSecret } = appData
   return ecomClient.store({
     storeId,
@@ -15,11 +16,11 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
 
     .then(async ({ data }) => {
       const product = data
-      let blingProductCode, originalBlingProduct, blingProductId, blingOrderNumber
+      let blingProductCode, originalBlingProduct, blingProductId, metafieldCodigo, metafieldId //, blingOrderNumber
       let { metafields } = product
       if (metafields) {
-        const metafieldCodigo = metafields.find(({ field }) => field === 'bling:codigo')
-        const metafieldId = metafields.find(({ field }) => field === 'bling:id')
+        metafieldCodigo = metafields.find(({ field }) => field === 'bling:codigo')
+        metafieldId = metafields.find(({ field }) => field === 'bling:id')
         if (metafieldCodigo) {
           blingProductCode = metafieldCodigo.value
         }
@@ -33,6 +34,7 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
       // Bling Requests
       const bling = await blingAxios(clientId, clientSecret, storeId)
 
+      // console.log('blingProductCode ', blingProductCode)
       const job = bling.get('/produtos', {
         params: {
           codigo: blingProductCode,
@@ -46,7 +48,8 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
           throw err
         })
 
-        .then(({ data: { data: blingProducts } }) => {
+        .then(async ({ data: { data: blingProducts } }) => {
+          // console.log('>> blingProducts: ', blingProducts)
           if (blingProducts && Array.isArray(blingProducts)) {
             originalBlingProduct = blingProducts.find(({ codigo }) => product.sku === String(codigo))
 
@@ -58,13 +61,20 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
             }
           }
           if (canCreateNew || appData.export_quantity || !blingStore) {
+            if (originalBlingProduct) {
+              originalBlingProduct = await bling.get(`/produtos/${blingProductId}`)
+                .then(({ data: { data: productBling } }) => productBling)
+            }
+            // console.log('produtos', JSON.stringify(originalBlingProduct))
             const blingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
-            console.log('produtos', JSON.stringify(blingProduct))
             if (blingProduct) {
               const endpoint = originalBlingProduct ? `/produtos/${blingProductId}` : '/produtos'
               if (originalBlingProduct) {
                 // TODO: remove debug
                 console.log('>> Put Bling ', endpoint)
+                console.log('>body ', JSON.stringify(blingProduct))
+
+                // TODO: it isn't updating stock. Why?
                 return bling.put(endpoint, blingProduct)
               }
               // TODO: remove debug
@@ -76,26 +86,26 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
         })
 
         .then(response => {
-          if (!blingProductId) {
+          if (!originalBlingProduct) {
             const responseData = response.data && response.data.data
             if (responseData) {
               if (!metafields) {
                 metafields = []
               }
 
-              if (blingOrderNumber) {
+              if (blingProductCode) {
                 metafields.push({
                   _id: ecomUtils.randomObjectId(),
                   namespace: 'bling',
-                  field: 'bling:id',
-                  value: String(blingOrderNumber)
+                  field: 'bling:codigo',
+                  value: String(blingProductCode)
                 })
               }
 
               metafields.push({
                 _id: ecomUtils.randomObjectId(),
                 namespace: 'bling',
-                field: 'bling:codigo',
+                field: 'bling:id',
                 value: String(responseData.id)
               })
 
