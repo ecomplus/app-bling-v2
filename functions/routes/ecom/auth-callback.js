@@ -1,4 +1,5 @@
 // E-Com Plus Procedures to register
+const { logger } = require('./../../context')
 const { procedures } = require('./../../ecom.config')
 // handle Store API errors
 const errorHandling = require('./../../lib/store-api/error-handling')
@@ -11,7 +12,7 @@ exports.post = ({ appSdk }, req, res) => {
   appSdk.handleCallback(storeId, req.body)
     .then(({ isNew, authenticationId }) => {
       if (isNew) {
-        console.log(`Installing store #${storeId}`)
+        logger.info(`Installing store #${storeId}`)
         /**
          * You may also want to send request to external server here:
 
@@ -29,15 +30,13 @@ exports.post = ({ appSdk }, req, res) => {
         return appSdk.getAuth(storeId, authenticationId).then(auth => {
           const { row, docRef } = auth
           if (!row.setted_up) {
-            console.log(`Try saving procedures for store #${storeId}`)
+            logger.info(`Try saving procedures for store #${storeId}`)
 
             procedures[0].triggers.push({
               resource: 'applications',
               resource_id: row.application_id,
               field: 'data'
             })
-
-            
 
             // must save procedures once only
             return appSdk.saveProcedures(storeId, procedures, auth)
@@ -71,7 +70,7 @@ exports.post = ({ appSdk }, req, res) => {
         errorHandling(err)
       } else {
         // Firestore error ?
-        console.error(err)
+        logger.error(err)
       }
       res.status(500)
       res.send({

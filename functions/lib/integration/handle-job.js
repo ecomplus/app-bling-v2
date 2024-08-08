@@ -1,3 +1,4 @@
+const { logger } = require('./../../context')
 const getAppData = require('../store-api/get-app-data')
 const updateAppData = require('../store-api/update-app-data')
 
@@ -11,9 +12,9 @@ const queueRetry = (appSession, { action, queue, nextId }, appData, response) =>
     .then(documentSnapshot => {
       if (documentSnapshot.exists) {
         if (Date.now() - documentSnapshot.updateTime.toDate().getTime() > 5 * 60 * 1000) {
-          documentRef.delete().catch(console.error)
+          documentRef.delete().catch(logger.error)
         } else {
-          console.log(`> Skip retry: ${retryKey}`)
+          logger.info(`> Skip retry: ${retryKey}`)
           return null
         }
       }
@@ -118,7 +119,7 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
                     [queue]: queueList
                   }
                 }
-                console.log(`#${storeId} ${JSON.stringify(data)}`)
+                logger.info(`#${storeId} ${JSON.stringify(data)}`)
                 updateAppData({ appSdk, storeId, auth }, data).catch(err => {
                   if (err.response && (!err.response.status || err.response.status >= 500)) {
                     queueRetry({ appSdk, storeId, auth }, queueEntry, appData, err.response)
@@ -156,13 +157,13 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
                       [queueEntry.key]: false
                     }, {
                       merge: true
-                    }).catch(console.error)
+                    }).catch(logger.error)
                   }, queueEntry.mustUpdateAppQueue ? 900 : 400)
                 }
               })
               .then(checkUpdateQueue)
               .catch(err => {
-                console.error(err)
+                logger.error(err)
                 checkUpdateQueue()
               })
           } else {
@@ -177,12 +178,12 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
           }
         })
     })
-    .catch(console.error)
+    .catch(logger.error)
 }
 
 const handleJob = (appSession, queueEntry, job) => {
   // TODO: remove debug
-  console.log('>> Handle Job ')
+  logger.info('>> Handle Job ')
   job
     .then(payload => {
       if (payload && typeof payload.then === 'function') {
@@ -196,7 +197,7 @@ const handleJob = (appSession, queueEntry, job) => {
     })
     .catch(err => {
       // TODO: remove debug
-      console.log('> handle Error ', err)
+      logger.info('> handle Error ', err)
       if (!queueEntry.isNotQueued) {
         return log(appSession, queueEntry, err)
       }

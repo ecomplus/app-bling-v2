@@ -1,5 +1,6 @@
 const { firestore } = require('firebase-admin')
 const ecomClient = require('@ecomplus/client')
+const { logger } = require('./../../context')
 const blingAxios = require('../bling-auth/create-access')
 const parseProduct = require('./parsers/product-to-ecomplus')
 const { getCategories } = require('./services/categories')
@@ -31,7 +32,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
             lastUpdateTime = updateTime
             blingStockUpdate = documentSnapshot.get('estoque')
           }
-          documentSnapshot.ref.delete().catch(console.error)
+          documentSnapshot.ref.delete().catch(logger.error)
         })
         resolve(blingStockUpdate)
       })
@@ -47,10 +48,10 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
           .then(({ data }) => data)
           .catch(err => {
             if (err.response && err.response.status >= 400 && err.response.status < 500) {
-              console.log(`#${storeId} ${productId} => ${err.response.status}`)
+              logger.info(`#${storeId} ${productId} => ${err.response.status}`)
               return null
             }
-            console.error(err)
+            logger.error(err)
             throw err
           })
 
@@ -113,7 +114,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
         .then(async payload => {
           const dispatchNullJob = () => handleJob({ appSdk, storeId }, queueEntry, Promise.resolve(null))
           if (!payload && !appData.import_product) {
-            console.log(`#${storeId} not found ${sku}`)
+            logger.info(`#${storeId} not found ${sku}`)
             dispatchNullJob()
             return payload
           }
@@ -122,7 +123,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
 
           if (!product && (isHiddenQueue || productId) && !appData.import_product) {
             dispatchNullJob()
-            console.log(`#${storeId} skipping ${sku} / ${productId}`)
+            logger.info(`#${storeId} skipping ${sku} / ${productId}`)
             return
           }
 
@@ -168,7 +169,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
                   endpoint += `/variations/${variationId}`
                 }
                 endpoint += '/quantity.json'
-                console.log(`#${storeId} ${endpoint}`, { quantity, sku })
+                logger.info(`#${storeId} ${endpoint}`, { quantity, sku })
                 return appSdk.apiRequest(storeId, endpoint, 'PUT', { quantity }, auth)
               }
               return null
@@ -184,23 +185,23 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
               endpoint = '/products.json'
             }
             if (method === 'POST' && blingProduct.codigoPai) {
-              console.log(`#${storeId} skipping ${sku} - is a variation`)
+              logger.info(`#${storeId} skipping ${sku} - is a variation`)
               return
             }
             const category = await getCategories(appData, storeId)
-            console.log('category with store', JSON.stringify(category || {}))
+            logger.info(`> Category with store ${JSON.stringify(category || {})}`)
             return parseProduct(blingProduct, product && product.variations, storeId, auth, method === 'POST', appData)
               .then(product => {
                 if (!isNaN(quantity)) {
                   product.quantity = quantity >= 0 ? quantity : 0
                 }
-                console.log(`#${storeId} ${method} ${endpoint}`)
+                logger.info(`#${storeId} ${method} ${endpoint}`)
 
                 return appSdk.apiRequest(storeId, endpoint, method, product, auth)
               })
           }
 
-          console.log(`#${storeId} ${JSON.stringify({ sku, productId, hasVariations, variationId })}`)
+          logger.info(`#${storeId} ${JSON.stringify({ sku, productId, hasVariations, variationId })}`)
           let job
           if (blingStockUpdate && isHiddenQueue && !appData.update_product_auto && !appData.import_product) {
             job = handleBlingStock(blingStockUpdate, true)
@@ -218,13 +219,13 @@ module.exports = async ({ appSdk, storeId, auth }, _blingClientId, blingStore, b
                     .then((res) => {
                       const blingData = res.data && res.data.data
                       if (blingData) {
-                        console.log('Produto bling', JSON.stringify(blingData))
+                        logger.info(`> Produto bling: ${JSON.stringify(blingData)}`)
                         return handleBlingStock(blingData)
                       }
                     })
                 }
               }
-              console.log('the returned product is:', data.data)
+              logger.info(`The returned product is ${JSON.stringify(data?.data)}`)
               const msg = `SKU ${sku} não encontrado no Bling`
               const err = new Error(msg)
               err.isConfigError = true

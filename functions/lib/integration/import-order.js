@@ -1,4 +1,5 @@
 const { firestore } = require('firebase-admin')
+const { logger } = require('./../../context')
 const blingAxios = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-ecomplus/')
 const parseStatus = require('./parsers/order-to-ecomplus/status')
@@ -31,7 +32,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingToken, blingStore, blin
         return null
       }
       blingOrder = blingOrder.pedido
-      console.log(`#${storeId} found order ${blingOrder.numero}`)
+      logger.info(`#${storeId} found order ${blingOrder.numero}`)
 
       const situacao = typeof blingOrder.situacao === 'string'
         ? blingOrder.situacao.toLowerCase()
@@ -43,7 +44,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingToken, blingStore, blin
           documentSnapshot.exists &&
           documentSnapshot.get('situacao') === situacao
         ) {
-          console.log(`>> Ignoring Bling order #${blingOrderNumber} with same status`)
+          logger.info(`>> Ignoring Bling order #${blingOrderNumber} with same status`)
           return null
         }
 
@@ -95,7 +96,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingToken, blingStore, blin
                 updatedAt: firestore.Timestamp.fromDate(new Date())
               })
             } catch (err) {
-              console.error(err)
+              logger.error(err)
             }
             return (payload && payload.response) || payload
           })

@@ -1,3 +1,4 @@
+const { logger } = require('./../../context')
 exports.get = ({ appSdk }, req, res) => {
   /* This endpoint MUST BE PRIVATE */
   // returning Store API authentication ID and access token for external usage
@@ -7,7 +8,7 @@ exports.get = ({ appSdk }, req, res) => {
     })
     .catch(err => {
       const { message } = err
-      console.error(err)
+      logger.error(err)
       res.status(500)
       res.send({
         error: 'get_token_err',

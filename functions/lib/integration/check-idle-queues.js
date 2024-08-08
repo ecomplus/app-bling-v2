@@ -71,9 +71,9 @@ module.exports = context => setup(null, true, firestore())
   .then(async appSdk => {
     const storeIds = await listStoreIds()
     console.log('store ids', storeIds)
-    const runAllStores = fn_1 => storeIds
+    const runAllStores = fn1 => storeIds
       .sort(() => Math.random() - Math.random())
-      .map(storeId => fn_1({ appSdk, storeId }))
+      .map(storeId => fn1({ appSdk, storeId }))
     return await Promise.all(runAllStores(checkIdleQueue))
   })
   .catch(console.error)

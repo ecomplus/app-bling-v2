@@ -1,5 +1,6 @@
 const updateAppData = require('../../../lib/store-api/update-app-data')
 const createAxios = require('../../../lib/bling-auth/create-axios')
+const { logger } = require('./../../../context')
 
 exports.get = async ({ appSdk, admin }, req, res) => {
   const { storeId } = req
@@ -17,7 +18,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
       if (page > 1) {
         endpoint += `/page=${page}`
       }
-      console.log(`> #${storeId} import all [page ${page}]`)
+      logger.info(`> #${storeId} import all [page ${page}]`)
 
       setTimeout(() => {
         countBlingReqs++
@@ -43,13 +44,13 @@ exports.get = async ({ appSdk, admin }, req, res) => {
               }
             }
             if (skus.length) {
-              console.log(`> #${storeId} all SKUs: ${JSON.stringify(skus)}`)
+              logger.info(`> #${storeId} all SKUs: ${JSON.stringify(skus)}`)
               return updateAppData({ appSdk, storeId }, {
                 importation: { skus }
               })
             }
           })
-          .catch(console.error)
+          .catch(logger.error)
       }, countBlingReqs * 500)
     }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { functionName, operatorToken } = require('./__env')
+const { createExecContext } = require('./context')
 
 const path = require('path')
 const recursiveReadDir = require('./lib/recursive-read-dir')
@@ -132,6 +133,7 @@ recursiveReadDir(routesDir).filter(filepath => filepath.endsWith('.js')).forEach
   }
 })
 
+server.use(createExecContext)
 server.use(router)
 
 exports[functionName] = functions.https.onRequest(server)

@@ -1,6 +1,7 @@
 // read configured E-Com Plus app data
+const { logger } = require('./../../context')
 const getAppData = require('../../lib/store-api/get-app-data')
-const blingAxios = require('../../lib/bling-auth/create-access')
+// const blingAxios = require('../../lib/bling-auth/create-access')
 const { baseUri, operatorToken } = require('./../../__env')
 
 // async integration handlers
@@ -22,7 +23,7 @@ const ECHO_API_ERROR = 'STORE_API_ERR'
 const handlingIds = []
 
 const removeFromQueue = (resourceId) => {
-  console.log(handlingIds)
+  logger.info(handlingIds)
   const handlingIndex = handlingIds.indexOf(resourceId)
   handlingIds.splice(handlingIndex, 1)
 }
@@ -32,7 +33,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const { storeId } = req
 
   if (req.get('host') && !baseUri.includes(req.get('host'))) {
-    console.log('>>> Proxy to function v2')
+    logger.info('>>> Proxy to function v2')
     const axios = require('axios')
     try {
       const { status, data } = await axios.post(req.url, req.body, {
@@ -42,7 +43,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           'x-operator-token': operatorToken
         }
       })
-      console.log(`>>> Webhook proxy response: ${status} ${data}`)
+      logger.info(`>>> Webhook proxy response: ${status} ${data}`)
       return res.status(status).send(data)
     } catch (error) {
       const err = new Error('Error proxying to function v2')
@@ -51,7 +52,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         status: error.response.status,
         data: error.response.data
       }
-      console.error(err)
+      logger.error(err)
     }
   }
 
@@ -63,7 +64,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   const resourceId = trigger.resource_id || trigger.inserted_id
 
   // get app configured options
-  console.log('resource id', resourceId)
   if (!handlingIds.includes(resourceId)) {
     handlingIds.push(resourceId)
 
@@ -84,11 +84,10 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
             /* DO YOUR CUSTOM STUFF HERE */
             const blingClientId = appData.client_id
-            const blingClientSecret = appData.client_secret
-            const bling = await blingAxios(blingClientId, blingClientSecret, storeId)
-            console.log(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
+            // const blingClientSecret = appData.client_secret
+            // const bling = await blingAxios(blingClientId, blingClientSecret, storeId)
+            logger.info(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
 
-            
             // const blingClientSecret = appData.client_secret
             const blingStore = appData.bling_store
             const blingDeposit = appData.bling_deposit
@@ -101,40 +100,38 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 canCreateNew = true
               } else if (trigger.authentication_id !== auth.myId) {
                 switch (trigger.resource) {
-                  case 'orders':
-                    if (false) {
-                      canCreateNew = appData.new_orders ? undefined : false
-                      integrationConfig = {
-                        _exportation: {
-                          order_ids: [resourceId]
-                        }
-                      }
-                    }
-                    break
+                  // case 'orders':
+                  //   if (false) {
+                  //     canCreateNew = appData.new_orders ? undefined : false
+                  //     integrationConfig = {
+                  //       _exportation: {
+                  //         order_ids: [resourceId]
+                  //       }
+                  //     }
+                  //   }
+                  //   break
 
                   case 'products':
-                    if (false) {
-                      if (trigger.action === 'create') {
-                        if (!appData.new_products) {
-                          break
-                        }
-                        canCreateNew = true
-                      } else if (
-                        (!trigger.body.price || !appData.export_price) &&
-                        (!trigger.body.quantity || !appData.export_quantity)
-                      ) {
+                    if (trigger.action === 'create') {
+                      if (!appData.new_products) {
                         break
                       }
-                      integrationConfig = {
-                        _exportation: {
-                          product_ids: [resourceId]
-                        }
+                      canCreateNew = true
+                    } else if (
+                      (!trigger.body.price || !appData.export_price) &&
+                      (!trigger.body.quantity || !appData.export_quantity)
+                    ) {
+                      break
+                    }
+                    integrationConfig = {
+                      _exportation: {
+                        product_ids: [resourceId]
                       }
                     }
                     break
                 }
               }
-              console.log('integration config', JSON.stringify(integrationConfig))
+              logger.info(`Integration config  ${JSON.stringify(integrationConfig)}`)
               if (integrationConfig) {
                 const actions = Object.keys(integrationHandlers)
                 actions.forEach(action => {
@@ -162,7 +159,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           handler
                         ) {
                           const debugFlag = `#${storeId} ${action}/${queue}/${nextId}`
-                          console.log(`> Starting ${debugFlag}`)
+                          logger.info(`> Starting ${debugFlag}`)
                           const queueEntry = { action, queue, nextId, mustUpdateAppQueue }
 
                           // eslint-disable-next-line promise/no-nesting
@@ -216,9 +213,9 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               status: err.response.status,
               data: err.response.data
             })
-            console.error(error)
+            logger.error(error)
           } else {
-            console.error(err)
+            logger.error(err)
           }
           // request to Store API with error response
           // return error status code
@@ -231,7 +228,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
         }
       })
   } else {
-    console.log(`# Skipped in execution #${resourceId} [${trigger.resource} - ${trigger.action}]`)
+    logger.info(`# Skipped in execution #${resourceId} [${trigger.resource} - ${trigger.action}]`)
     res.status(203).send('Concurrent request with same ResourceId')
   }
 }

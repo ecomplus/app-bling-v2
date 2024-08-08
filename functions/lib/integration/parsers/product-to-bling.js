@@ -19,7 +19,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
         : 'UN'
   }
 
-  if (originalBlingProduct.id) {
+  if (originalBlingProduct?.id) {
     blingProduct.id = originalBlingProduct.id
   }
 

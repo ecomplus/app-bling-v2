@@ -1,6 +1,7 @@
 /* eslint-disable promise/no-nesting */
 
 const ecomUtils = require('@ecomplus/utils')
+const { logger } = require('./../../context')
 const errorHandling = require('../store-api/error-handling')
 const blingAxios = require('../bling-auth/create-access')
 const parseOrder = require('./parsers/order-to-bling/')
@@ -20,7 +21,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
       const order = response.data
       const logHead = `#${storeId} ${orderId} `
       if (!order.financial_status) {
-        console.log(`${logHead}skipped with no financial status`)
+        logger.info(`${logHead}skipped with no financial status`)
         return null
       }
 
@@ -32,7 +33,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
         if (metafield) {
           blingOrderNumber = metafield.value
           if (blingOrderNumber === 'skip') {
-            console.log(`${logHead}skipped by metafield`)
+            logger.info(`${logHead}skipped by metafield`)
             return null
           }
           hasCreatedBlingOrder = Boolean(blingOrderNumber)
@@ -83,7 +84,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
                 case 'pendente':
                 case 'em aberto':
                 case 'cancelado':
-                  console.log(`${logHead}skipped with status "${blingStatus}"`)
+                  logger.info(`${logHead}skipped with status "${blingStatus}"`)
                   return {}
               }
             }
@@ -99,7 +100,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
               .then(({ data }) => {
                 if (data && data.pedidos && data.pedidos[0]) {
                   blingOrderNumber = data.pedidos[0].pedido.numero
-                  console.log(`${logHead}> Bling n${blingOrderNumber}`)
+                  logger.info(`${logHead}> Bling n${blingOrderNumber}`)
                   if (blingOrderNumber) {
                     if (!metafields) {
                       metafields = []
@@ -116,7 +117,7 @@ module.exports = ({ appSdk, storeId, auth }, blingToken, blingStore, blingDeposi
                       .catch(console.error)
                   }
                 } else {
-                  console.log(`${logHead}> Bling error (?) ${JSON.stringify(data)}`)
+                  logger.info(`${logHead}> Bling error (?) ${JSON.stringify(data)}`)
                 }
                 return { blingStatus }
               })
