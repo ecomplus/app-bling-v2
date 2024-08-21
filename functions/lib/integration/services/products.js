@@ -1,4 +1,4 @@
-const blingAxios = require('../../bling-auth/create-access')
+const Bling = require('../../bling-auth/client')
 const logger = console
 
 const searchProduct = async (appData, storeId, sku) => {
@@ -6,7 +6,7 @@ const searchProduct = async (appData, storeId, sku) => {
     client_id: clientId,
     client_secret: clientSecret
   } = appData
-  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const bling = new Bling(clientId, clientSecret, storeId)
   const blingSearch = await bling.get(`/produtos?codigo=${sku}&limite=1`)
   return blingSearch && blingSearch.data && blingSearch.data.data
 }
@@ -16,7 +16,7 @@ const getProduct = async (appData, storeId, id) => {
     client_id: clientId,
     client_secret: clientSecret
   } = appData
-  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const bling = new Bling(clientId, clientSecret, storeId)
   const blingProduct = await bling.get(`/produtos/${id}`)
   return blingProduct && blingProduct.data && blingProduct.data.data
 }
@@ -26,7 +26,7 @@ const getStock = async (appData, storeId, id) => {
     client_id: clientId,
     client_secret: clientSecret
   } = appData
-  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const bling = new Bling(clientId, clientSecret, storeId)
   const blingProduct = await bling.get(`/estoques/saldos?idsProdutos%5B%5D=${id}`)
   return blingProduct && blingProduct.data && blingProduct.data.data
 }
@@ -36,7 +36,7 @@ const updateProduct = async (appData, storeId, id, body) => {
     client_id: clientId,
     client_secret: clientSecret
   } = appData
-  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const bling = new Bling(clientId, clientSecret, storeId)
   const updatedProduct = await bling.put(`/produtos/${id}`, body)
   return updatedProduct && updatedProduct.data && updatedProduct.data.data
 }
@@ -46,7 +46,7 @@ const listSpecificProductStore = async (appData, storeId, id) => {
     client_id: clientId,
     client_secret: clientSecret
   } = appData
-  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const bling = new Bling(clientId, clientSecret, storeId)
   const blingSearchSpecificStore = await bling.get(`/produtos/lojas${id}`)
   return blingSearchSpecificStore && blingSearchSpecificStore.data && blingSearchSpecificStore.data.data
 }
@@ -57,7 +57,7 @@ const listProductStore = async (appData, storeId) => {
     client_secret: clientSecret,
     bling_store: blingStore
   } = appData
-  const bling = await blingAxios(clientId, clientSecret, storeId)
+  const bling = new Bling(clientId, clientSecret, storeId)
   const products = []
   let page = 1
   let count = 0

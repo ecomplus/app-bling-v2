@@ -5,7 +5,7 @@ const logger = console
 
 const firestoreColl = 'bling_tokens'
 
-module.exports = async function (clientId, clientSecret, storeId, tokenExpirationGap = 9000) {
+module.exports = async function (clientId, clientSecret, storeId, force = false, tokenExpirationGap = 9000) {
   let docRef
   if (firestoreColl) {
     docRef = require('firebase-admin')

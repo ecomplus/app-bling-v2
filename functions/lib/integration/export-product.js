@@ -2,7 +2,7 @@ const ecomUtils = require('@ecomplus/utils')
 const ecomClient = require('@ecomplus/client')
 const { logger } = require('./../../context')
 const errorHandling = require('../store-api/error-handling')
-const blingAxios = require('../bling-auth/create-access')
+const Bling = require('../bling-auth/client')
 const parseProduct = require('./parsers/product-to-bling')
 const handleJob = require('./handle-job')
 const url = require('url')
@@ -21,7 +21,7 @@ const getBlingStockId = (blingApi, blingProductId) => {
   }).catch(console.error)
 }
 
-module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
+module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEntry, appData, canCreateNew) => {
   const productId = queueEntry.nextId
   logger.info(`>> export products to bling ${productId}`)
   const { client_id: clientId, client_secret: clientSecret } = appData
@@ -48,7 +48,7 @@ module.exports = ({ appSdk, storeId, auth }, _blingToken, blingStore, blingDepos
         blingProductCode = product.sku
       }
       // Bling Requests
-      const blingApi = await blingAxios(clientId, clientSecret, storeId)
+      const blingApi = new Bling(clientId, clientSecret, storeId)
 
       const job = blingApi.get('/produtos', {
         params: {

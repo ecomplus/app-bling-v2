@@ -422,9 +422,9 @@ const app = {
               ],
             },
             status_bling: {
-              type: 'number',
-              title: 'Número do status',
-              description: 'Cada status no bling corresponde a um número, basta buscar esse número e realizar a correspondência'
+              type: 'string',
+              title: 'Nome do status Bling',
+              description: 'Informe o nome do status correspondente no bling'
             }
           }
         }
@@ -441,7 +441,7 @@ const app = {
           type: 'object',
           properties: {
             ecom_payment: {
-              title: 'Rótulo da forma de pagamento na E-Com Plus',
+              title: 'Nome do método de pagamento na E-Com Plus. (Ex: Boleto Bancário - Braspag)',
               type: 'string'
             },
             bling_payment: {

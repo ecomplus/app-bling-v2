@@ -100,16 +100,14 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 canCreateNew = true
               } else if (trigger.authentication_id !== auth.myId) {
                 switch (trigger.resource) {
-                  // case 'orders':
-                  //   if (false) {
-                  //     canCreateNew = appData.new_orders ? undefined : false
-                  //     integrationConfig = {
-                  //       _exportation: {
-                  //         order_ids: [resourceId]
-                  //       }
-                  //     }
-                  //   }
-                  //   break
+                  case 'orders':
+                    canCreateNew = appData.new_orders ? undefined : false
+                    integrationConfig = {
+                      _exportation: {
+                        order_ids: [resourceId]
+                      }
+                    }
+                    break
 
                   case 'products':
                     if (trigger.action === 'create') {
@@ -165,7 +163,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           // eslint-disable-next-line promise/no-nesting
                           return handler(
                             { appSdk, storeId, auth },
-                            blingClientId,
                             blingStore,
                             blingDeposit,
                             queueEntry,

@@ -58,7 +58,7 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
           }
           const logEntry = {
             resource: /order/i.test(queueEntry.queue) ? 'orders' : 'products',
-            [(isImportation ? 'tiny_id' : 'resource_id')]: queueEntry.nextId,
+            [(isImportation ? 'bling_id' : 'resource_id')]: queueEntry.nextId,
             success: !isError,
             timestamp: new Date().toISOString()
           }
@@ -182,8 +182,6 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
 }
 
 const handleJob = (appSession, queueEntry, job) => {
-  // TODO: remove debug
-  logger.info('>> Handle Job ')
   job
     .then(payload => {
       if (payload && typeof payload.then === 'function') {
@@ -196,8 +194,6 @@ const handleJob = (appSession, queueEntry, job) => {
       return true
     })
     .catch(err => {
-      // TODO: remove debug
-      logger.info('> handle Error ', err)
       if (!queueEntry.isNotQueued) {
         return log(appSession, queueEntry, err)
       }
