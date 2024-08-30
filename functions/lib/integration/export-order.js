@@ -1,5 +1,3 @@
-/* eslint-disable promise/no-nesting */
-
 const ecomUtils = require('@ecomplus/utils')
 const { logger } = require('./../../context')
 const errorHandling = require('../store-api/error-handling')
@@ -10,6 +8,7 @@ const parseStatus = require('./parsers/order-to-bling/status')
 const url = require('url')
 const getCustomerBling = require('./utils/get-customer-bling')
 const getProductsBling = require('./utils/get-products-bling')
+const { getPaymentBling } = require('./services/payment-method')
 
 const getStatusBling = async (bling) => bling.get('/situacoes/modulos')
   .then(({ data: { data: modules } }) => {
@@ -19,55 +18,11 @@ const getStatusBling = async (bling) => bling.get('/situacoes/modulos')
         .then(({ data: { data: situacoes } }) => {
           return situacoes
         })
-        // .catch(console.error)
     }
     return null
   })
-  // .catch(console.error)
 
-const getPaymentBling = async (blingAxios, transaction, appDataParsePayment) => {
-  const {
-    payment_method: paymentMethod
-  } = transaction
-
-  const namePaymentMethod = paymentMethod?.name?.toLowerCase()
-
-  let parsePayment
-  if (appDataParsePayment && appDataParsePayment.length) {
-    parsePayment = appDataParsePayment.find(payment => payment.ecom_payment.toLowerCase() === namePaymentMethod)
-  }
-  // console.log(`forma: ${JSON.stringify(parsePayment)}`)
-
-  if (!parsePayment) {
-    const parsePaymentType = {
-      credit_card: 3, // Cartão de Crédito
-      debit_card: 4, // Cartão de Débito
-      banking_billet: 15, // Boleto Bancário
-      loyalty_points: 19, // Programa de Fidelidade, Cashback, Crédito Virtual
-      account_deposit: 20, // Pagamento Instantâneo (PIX) – Estático
-      other: 99 // Outros
-    }
-    const query = paymentMethod.code ? `?tiposPagamentos[]=${parsePaymentType[paymentMethod.code]}` : ''
-    const formasPagamentos = await blingAxios.get(`/formas-pagamentos${query}`)
-      .then(({ data }) => {
-        if (!data.data?.length) {
-          return blingAxios.get('/formas-pagamentos')
-            .then(({ data }) => {
-              return data.data && data.data[0]
-            })
-            // .catch(console.error)
-        }
-        return data.data[0]
-      })
-      // .catch(console.error)
-
-    return formasPagamentos?.id
-  }
-
-  return parsePayment.bling_payment
-}
-
-module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
+module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEntry, appData, canCreateNew) => {
   const orderId = queueEntry.nextId
   const {
     client_id: clientId,
@@ -79,9 +34,9 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
     .then(async ({ response }) => {
       const order = response.data
       const transaction = order.transactions && order.transactions[0]
-      const logHead = `#${storeId} ${orderId} `
+      const logHead = `#${storeId} ${orderId}`
       if (!order.financial_status) {
-        logger.info(`${logHead}skipped with no financial status`)
+        logger.info(`${logHead} skipped with no financial status`)
         return null
       }
 
