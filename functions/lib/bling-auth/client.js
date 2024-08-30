@@ -1,5 +1,6 @@
 const blingAxios = require('./create-access')
-
+// https://developer.bling.com.br/limites#filtros
+const timeForce = 18000 * 1000
 class Bling {
   constructor (clientId, clientSecret, storeId) {
     if (!clientId && !clientSecret) {
@@ -10,9 +11,33 @@ class Bling {
     this.clientSecret = clientSecret
     this.storeId = storeId
     this._bling = null
+    this.last_request = null
+  }
+
+  async checkTime (url) {
+    return new Promise(resolve => {
+      const now = new Date()
+      // console.log(`last ${this.last_request?.toISOString()} now ${now.toISOString()} ${url}`)
+      if (!this.last_request) {
+        this.last_request = now
+        resolve(true)
+      } else {
+        const timeout = now.getTime() - this.last_request.getTime()
+        if (timeout >= 1000) {
+          this.last_request = now
+          resolve(true)
+        } else {
+          setTimeout(() => {
+            this.last_request = new Date()
+            resolve(true)
+          }, 1000 - timeout)
+        }
+      }
+    })
   }
 
   async get (url, opts) {
+    await this.checkTime(url)
     if (!this._bling) {
       this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId)
     }
@@ -22,7 +47,8 @@ class Bling {
         if (err.response?.data) {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
-            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, true)
+            const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.get(url, opts)
           }
         }
@@ -31,6 +57,7 @@ class Bling {
   }
 
   async post (url, data, opts) {
+    await this.checkTime(url)
     if (!this._bling) {
       this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId)
     }
@@ -40,7 +67,8 @@ class Bling {
         if (err.response?.data) {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
-            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, true)
+            const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.post(url, data, opts)
           }
         }
@@ -49,6 +77,7 @@ class Bling {
   }
 
   async patch (url, data, opts) {
+    await this.checkTime(url)
     if (!this._bling) {
       this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId)
     }
@@ -58,7 +87,8 @@ class Bling {
         if (err.response?.data) {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
-            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, true)
+            const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.patch(url, data, opts)
           }
         }
@@ -67,6 +97,7 @@ class Bling {
   }
 
   async put (url, data, opts) {
+    await this.checkTime(url)
     if (!this._bling) {
       this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId)
     }
@@ -76,7 +107,8 @@ class Bling {
         if (err.response?.data) {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
-            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, true)
+            const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.put(url, data, opts)
           }
         }
@@ -85,6 +117,7 @@ class Bling {
   }
 
   async delete (url) {
+    await this.checkTime(url)
     if (!this._bling) {
       this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId)
     }
@@ -94,7 +127,8 @@ class Bling {
         if (err.response?.data) {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
-            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, true)
+            const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.delete(url)
           }
         }

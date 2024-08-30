@@ -4,7 +4,7 @@ const { logger } = require('../../../context')
 const url = require('url')
 
 module.exports = async (blingAxios, appData, order) => {
-  const _contatTypeClientId = appData._contatTypeClientId
+  const _contatTypeClientId = appData.outher_config?._contatTypeClientId
   const buyer = order.buyers && order.buyers[0]
   const urlParams = {
     numeroDocumento: buyer.doc_number

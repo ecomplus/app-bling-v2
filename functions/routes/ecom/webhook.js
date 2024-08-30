@@ -1,18 +1,17 @@
 // read configured E-Com Plus app data
 const { logger } = require('./../../context')
 const getAppData = require('../../lib/store-api/get-app-data')
-// const blingAxios = require('../../lib/bling-auth/create-access')
-const { baseUri, operatorToken } = require('./../../__env')
+const { Timestamp, getFirestore } = require('firebase-admin/firestore')
+const { baseUri, operatorToken, nameCollectionEvents } = require('./../../__env')
 
-// async integration handlers
 const integrationHandlers = {
   exportation: {
-    product_ids: require('../../lib/integration/export-product'),
-    order_ids: require('../../lib/integration/export-order')
+    product_ids: true,
+    order_ids: true
   },
   importation: {
-    skus: require('../../lib/integration/import-product'),
-    order_numbers: require('../../lib/integration/import-order')
+    skus: true,
+    order_numbers: true
   }
 }
 
@@ -89,8 +88,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
             logger.info(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
 
             // const blingClientSecret = appData.client_secret
-            const blingStore = appData.bling_store
-            const blingDeposit = appData.bling_deposit
+            // const blingStore = appData.bling_store
+            // const blingDeposit = appData.bling_deposit
             if (typeof blingClientId === 'string' && blingClientId) {
               let integrationConfig
               let canCreateNew = false
@@ -130,6 +129,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 }
               }
               logger.info(`Integration config  ${JSON.stringify(integrationConfig)}`)
+              // const actions = ['exportation', 'importation']
               if (integrationConfig) {
                 const actions = Object.keys(integrationHandlers)
                 actions.forEach(action => {
@@ -157,20 +157,35 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           handler
                         ) {
                           const debugFlag = `#${storeId} ${action}/${queue}/${nextId}`
-                          logger.info(`> Starting ${debugFlag}`)
+                          const now = Timestamp.now()
+                          const docRef = getFirestore().doc(`${nameCollectionEvents}_ecomplus/${storeId}_${nextId}`)
+                          logger.info(`> Send ${debugFlag}`)
                           const queueEntry = { action, queue, nextId, mustUpdateAppQueue }
-
+                          const body = {
+                            eventBy: 'ecomplus', // todo: remove?
+                            storeId,
+                            action: handlerName,
+                            queue,
+                            resourceId: nextId,
+                            createdAt: now,
+                            mustUpdateAppQueue, // todo remove?
+                            isHiddenQueue // used in importation
+                          }
+                          if (canCreateNew !== undefined) {
+                            Object.assign(body, { canCreateNew })
+                          }
+                          return docRef.set(body, { merge: true })
                           // eslint-disable-next-line promise/no-nesting
-                          return handler(
-                            { appSdk, storeId, auth },
-                            blingStore,
-                            blingDeposit,
-                            queueEntry,
-                            appData,
-                            canCreateNew,
-                            isHiddenQueue
-                          )
-                            .then(() => ({ appData, action, queue }))
+                          // return handler(
+                          //   { appSdk, storeId, auth },
+                          //   blingStore,
+                          //   blingDeposit,
+                          //   queueEntry,
+                          //   appData,
+                          //   canCreateNew,
+                          //   isHiddenQueue
+                          // )
+                            .then(() => ({ appData, queueEntry }))
                         }
                       }
                     }
@@ -183,9 +198,12 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           })
       })
 
-      .then(({ appData, action, queue }) => {
+      .then(({ appData, queueEntry }) => {
         removeFromQueue(resourceId)
         if (appData) {
+          const { action, queue /*, nextId, mustUpdateAppQueue */ } = queueEntry
+          // todo: remove id in appData
+
           if (appData[action] && Array.isArray(appData[action][queue])) {
             res.status(202)
           } else {

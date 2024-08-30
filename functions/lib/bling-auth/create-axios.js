@@ -21,10 +21,8 @@ module.exports = (accessToken, clientId, clientSecret) => {
   }
   const body = {
     baseURL,
-    headers
-  }
-  if (!accessToken) {
-    body.timeout = 6000
+    headers,
+    timeout: accessToken ? 10000 : 30000
   }
 
   return axios.create(body)

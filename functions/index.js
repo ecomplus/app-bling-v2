@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
-const { functionName, operatorToken } = require('./__env')
-const { createExecContext } = require('./context')
+const { functionName, operatorToken, nameCollectionEvents } = require('./__env')
+const { createExecContex } = require('./context')
+const handleEvents = require('./lib/events/handle-events')
 
 const path = require('path')
 const recursiveReadDir = require('./lib/recursive-read-dir')
@@ -133,10 +134,10 @@ recursiveReadDir(routesDir).filter(filepath => filepath.endsWith('.js')).forEach
   }
 })
 
-server.use(createExecContext)
+// server.use(createContext)
 server.use(router)
 
-exports[functionName] = functions.https.onRequest(server)
+exports[functionName] = functions.https.onRequest(createExecContex(server))
 console.log(`-- Starting '${app.title}' E-Com Plus app with Function '${functionName}'`)
 
 // schedule update tokens job
@@ -147,6 +148,14 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
   })
 })
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
+
+exports.eventsEcomplus = functions.firestore
+  .document(`${nameCollectionEvents}_ecomplus/{docId}`)
+  .onWrite(createExecContex(handleEvents))
+
+exports.eventsBling = functions.firestore
+  .document(`${nameCollectionEvents}_bling/{docId}`)
+  .onWrite(createExecContex(handleEvents))
 
 // update token job bling
 // const updateBlingToken = require('./lib/bling-auth/renovate-token')

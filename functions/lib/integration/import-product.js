@@ -1,239 +1,266 @@
-const { firestore } = require('firebase-admin')
 const ecomClient = require('@ecomplus/client')
+const ecomUtils = require('@ecomplus/utils')
 const { logger } = require('./../../context')
 const Bling = require('../bling-auth/client')
 const parseProduct = require('./parsers/product-to-ecomplus')
-const { getCategories } = require('./services/categories')
-const handleJob = require('./handle-job')
 
-module.exports = async ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
-  const [sku, productId] = String(queueEntry.nextId).split(';:')
-  const { client_id: clientId, client_secret: clientSecret } = appData
-  let blingProductCode = sku
-
-  return new Promise((resolve, reject) => {
-    if (queueEntry.blingStockUpdate) {
-      resolve(queueEntry.blingStockUpdate)
-      return
+const createUpdateProduct = async ({ appSdk, storeId, auth }, appData, sku, product, variationId, blingDeposit, blingProduct, isStockOnly) => {
+  let blingItems = [blingProduct]
+  if (Array.isArray(blingProduct.variacoes)) {
+    blingItems = blingItems.concat(blingProduct.variacoes)
+  }
+  blingItems.forEach(blingItem => {
+    if (Array.isArray(blingItem.depositos)) {
+      const deposit = blingItem.depositos.find((deposito) => String(deposito.id) === String(blingDeposit)) || blingItem.depositos[0]
+      if (deposit) {
+        let quantity
+        if (Number(storeId) === 51292 || appData.has_stock_reserve) {
+          quantity = Number(deposit.saldoVirtual)
+        } else {
+          quantity = Number(deposit.saldoFisico)
+        }
+        if (!isNaN(quantity)) {
+          blingItem.estoqueAtual = quantity
+          delete blingItem.depositos
+        }
+      }
     }
-
-    firestore().collection('bling_stock_updates')
-      .where('ref', '==', `${storeId}_${clientId}_${sku}`)
-      .get()
-      .then(querySnapshot => {
-        let blingStockUpdate, lastUpdateTime
-        const timestamp = Date.now()
-        querySnapshot.forEach(documentSnapshot => {
-          const updateTime = documentSnapshot.updateTime.toDate().getTime()
-          if (
-            timestamp - updateTime <= 1000 * 60 * 15 &&
-            (!lastUpdateTime || updateTime > lastUpdateTime)
-          ) {
-            lastUpdateTime = updateTime
-            blingStockUpdate = documentSnapshot.get('estoque')
-          }
-          documentSnapshot.ref.delete().catch(logger.error)
-        })
-        resolve(blingStockUpdate)
-      })
-      .catch(reject)
   })
 
-    .then(blingStockUpdate => {
-      const findingProduct = productId
-        ? ecomClient.store({
-          storeId,
-          url: `/products/${productId}.json`
-        })
-          .then(({ data }) => data)
-          .catch(err => {
-            if (err.response && err.response.status >= 400 && err.response.status < 500) {
-              logger.info(`#${storeId} ${productId} => ${err.response.status}`)
-              return null
-            }
-            logger.error(err)
-            throw err
-          })
+  const blingProductFind = !variationId ? blingProduct : blingItems.find(item => item.codigo === sku)
+  let quantity = Number(blingProductFind.estoqueAtual)
 
-        : ecomClient.search({
-          storeId,
-          url: '/items.json',
-          data: {
-            size: 1,
-            query: {
-              bool: {
-                must: {
-                  term: { skus: sku }
-                }
-              }
+  if (product && (isStockOnly === true || !appData.update_product || variationId)) {
+    if (!isNaN(quantity)) {
+      if (quantity < 0) {
+        quantity = 0
+      }
+      let endpoint = `/products/${product._id}`
+      if (variationId) {
+        endpoint += `/variations/${variationId}`
+      }
+      endpoint += '/quantity.json'
+      logger.info(`#${storeId} ${endpoint}`, { quantity, sku })
+      return appSdk.apiRequest(storeId, endpoint, 'PUT', { quantity }, auth)
+    }
+    return null
+  }
+
+  let method
+  let endpoint
+  const productId = product && product._id
+  if (productId) {
+    method = 'PATCH'
+    endpoint = `/products/${productId}.json`
+  } else {
+    method = 'POST'
+    endpoint = '/products.json'
+  }
+  if (method === 'POST' && blingProduct.codigoPai) {
+    logger.info(`#${storeId} skipping ${sku} - is a variation`)
+    return
+  }
+
+  // TODO: import categories
+  // const category = await getCategories(appData, storeId)
+  // logger.info(`> Category with store ${JSON.stringify(category || {})}`)
+
+  return parseProduct(blingProduct, product && product.variations, storeId, auth, method === 'POST', appData)
+    .then(bodyProduct => {
+      if (!isNaN(quantity)) {
+        bodyProduct.quantity = quantity >= 0 ? quantity : 0
+      }
+      if (!product?.metafields) {
+        bodyProduct.metafields = []
+        bodyProduct.metafields.push({
+          _id: ecomUtils.randomObjectId(),
+          namespace: 'bling',
+          field: 'bling:id',
+          value: `${blingProduct.id}`
+        })
+      }
+      logger.info(`#${storeId} ${method} ${endpoint} ${JSON.stringify(bodyProduct)}`)
+
+      return appSdk.apiRequest(storeId, endpoint, method, bodyProduct, auth)
+    })
+}
+
+module.exports = async ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
+  // console.log('init import product')
+  const [sku, productId] = String(queueEntry.nextId).split(';:')
+  const { client_id: clientId, client_secret: clientSecret } = appData
+
+  const findingProduct = productId
+    ? ecomClient.store({
+      storeId,
+      url: `/products/${productId}.json`
+    })
+      .then(({ data }) => data)
+      .catch(err => {
+        if (err.response && err.response.status >= 400 && err.response.status < 500) {
+          logger.info(`#${storeId} ${productId} => ${err.response.status}`)
+          return Promise.resolve(null)
+        }
+        logger.error(err)
+        throw err
+      })
+
+    : ecomClient.search({
+      storeId,
+      url: '/items.json',
+      data: {
+        size: 1,
+        query: {
+          bool: {
+            must: {
+              term: { skus: sku }
             }
           }
-        }).then(({ data }) => {
-          const hit = Array.isArray(data.hits.hits) && data.hits.hits[0] && data.hits.hits[0]
-          if (hit) {
-            const { _id, _source } = hit
-            if (_source.variations && _source.variations.length) {
-              return ecomClient.store({
-                storeId,
-                url: `/products/${_id}.json`
-              }).then(({ data }) => data)
-            }
-            return {
-              _id,
-              ..._source
-            }
+        }
+      }
+    }).then(({ data }) => {
+      const hit = Array.isArray(data.hits.hits) && data.hits.hits[0] && data.hits.hits[0]
+      if (hit) {
+        const { _id, _source } = hit
+        if (_source.variations && _source.variations.length) {
+          return ecomClient.store({
+            storeId,
+            url: `/products/${_id}.json`
+          }).then(({ data }) => data)
+        }
+        return {
+          _id,
+          ..._source
+        }
+      }
+      return Promise.resolve(null)
+    })
+
+  return findingProduct
+    .then(product => {
+      const hasVariations = product && product.variations && product.variations.length
+      if (hasVariations) {
+        const variation = product.variations.find(variation => sku === variation.sku)
+        if (variation) {
+          return {
+            product,
+            variationId: variation._id,
+            hasVariations
           }
+        } else if (isHiddenQueue) {
           return null
-        })
-
-      return findingProduct
-        .then(product => {
-          const hasVariations = product && product.variations && product.variations.length
-          if (hasVariations) {
-            const variation = product.variations.find(variation => sku === variation.sku)
-            if (variation) {
-              return {
-                product,
-                variationId: variation._id,
-                hasVariations
-              }
-            } else if (isHiddenQueue) {
-              return null
-            } else if (!appData.update_product) {
-              const msg = sku +
+        } else if (!appData.update_product) {
+          const msg = sku +
                 ' corresponde a um produto com variações, especifique o SKU da variação para importar.'
-              const err = new Error(msg)
-              err.isConfigError = true
-              handleJob({ appSdk, storeId }, queueEntry, Promise.reject(err))
-              return null
-            }
-          }
-          return { product, hasVariations }
-        })
+          const err = new Error(msg)
+          err.isConfigError = true
+          throw err
+        }
+      } else if (!product && !sku.length) {
+        const msg = 'Produto sem SKU, especifique-o para importar.'
+        const err = new Error(msg)
+        err.isConfigError = true
+        throw err
+      }
+      return { product, hasVariations }
+    })
 
-        .then(async payload => {
-          const dispatchNullJob = () => handleJob({ appSdk, storeId }, queueEntry, Promise.resolve(null))
-          if (!payload && !appData.import_product) {
-            logger.info(`#${storeId} not found ${sku}`)
-            dispatchNullJob()
-            return payload
-          }
-          const { product, variationId, hasVariations } = payload
-          const bling = new Bling(clientId, clientSecret, storeId)
+    .then(payload => {
+      if (!payload && !appData.import_product) {
+        const err = new Error('Skip')
+        throw err
+      }
+      const { product } = payload
 
-          if (!product && (isHiddenQueue || productId) && !appData.import_product) {
-            dispatchNullJob()
-            logger.info(`#${storeId} skipping ${sku} / ${productId}`)
-            return
-          }
+      if (!product && (isHiddenQueue || productId) && !appData.import_product) {
+        const err = new Error('Skip')
+        throw err
+      }
+      return payload
+    })
+    .then(async (payload) => {
+      const bling = new Bling(clientId, clientSecret, storeId)
+      let blingProductId
+      if (payload?.product && payload.product.metafields) {
+        const metafield = payload.product.metafields.find(({ field }) => field === 'bling:id')
+        if (metafield) {
+          blingProductId = metafield.value
+        }
+      }
 
-          if (product && product.metafields) {
-            const metafield = product.metafields.find(({ field }) => field === 'bling:codigo')
-            if (metafield) {
-              blingProductCode = metafield.value
-            }
-          }
+      let endpoint = '/produtos'
+      endpoint += !blingProductId ? `?codigo=${sku}` : `/${blingProductId}`
+      const blingProduct = await bling.get(endpoint)
+        .then(async ({ data }) => {
+          const responseData = data && data.data
+          if (responseData) {
+            const blingProduct = !blingProductId && responseData.length ? responseData[0] : responseData
+            if (blingProduct) {
+              const idsProdutos = [blingProduct.id]
 
-          const handleBlingStock = async (blingProduct, isStockOnly) => {
-            if (blingDeposit) {
-              let blingItems = [blingProduct]
-              if (Array.isArray(blingProduct.variacoes)) {
-                blingItems = blingItems.concat(blingProduct.variacoes)
-              }
-              blingItems.forEach(blingItem => {
-                if (Array.isArray(blingItem.depositos)) {
-                  const deposit = blingItem.depositos.find(({ deposito }) => String(deposito.id) === String(blingDeposit))
-                  if (deposit && deposit.deposito) {
-                    let quantity
-                    if (Number(storeId) === 51292 || appData.has_stock_reserve) {
-                      quantity = Number(deposit.deposito.saldoVirtual)
-                    } else {
-                      quantity = Number(deposit.deposito.saldo)
+              const blingProductData = !blingProductId
+                ? await bling.get(`/produtos/${blingProduct.id}`)
+                  .then(({ data: { data } }) => {
+                    if (data.variacao?.produtoPai?.id) {
+                      const id = data.variacao?.produtoPai?.id
+
+                      return bling.get(`/produtos/${id}`)
+                        .then(({ data: { data } }) => data)
                     }
-                    if (!isNaN(quantity)) {
-                      blingItem.estoqueAtual = quantity
-                      delete blingItem.depositos
-                    }
+
+                    return data
+                  })
+                : blingProduct
+
+              blingProductData?.variacoes?.forEach(variation => {
+                idsProdutos.push(variation.id)
+              })
+
+              const params = idsProdutos.reduce((acc, idProduto) => {
+                return acc + `idsProdutos[]=${idProduto}&`
+              }, '')
+              const stokeEndpoint = `/estoques/saldos?${params}`
+              const blingProductStoke = await bling.get(stokeEndpoint)
+                .then(({ data: { data } }) => data)
+
+              if (blingProductData) {
+                if (blingProductStoke.length) {
+                  const stokeProduct = blingProductStoke.find(stoke => stoke.produto.id === blingProductData.id)
+                  if (stokeProduct) {
+                    Object.assign(blingProductData, { depositos: stokeProduct.depositos })
                   }
-                }
-              })
-            }
-            let quantity = Number(blingProduct.estoqueAtual)
-            if (product && (isStockOnly === true || !appData.update_product || variationId)) {
-              if (!isNaN(quantity)) {
-                if (quantity < 0) {
-                  quantity = 0
-                }
-                let endpoint = `/products/${product._id}`
-                if (variationId) {
-                  endpoint += `/variations/${variationId}`
-                }
-                endpoint += '/quantity.json'
-                logger.info(`#${storeId} ${endpoint}`, { quantity, sku })
-                return appSdk.apiRequest(storeId, endpoint, 'PUT', { quantity }, auth)
-              }
-              return null
-            }
-
-            let method, endpoint
-            const productId = product && product._id
-            if (productId) {
-              method = 'PATCH'
-              endpoint = `/products/${productId}.json`
-            } else {
-              method = 'POST'
-              endpoint = '/products.json'
-            }
-            if (method === 'POST' && blingProduct.codigoPai) {
-              logger.info(`#${storeId} skipping ${sku} - is a variation`)
-              return
-            }
-            const category = await getCategories(appData, storeId)
-            logger.info(`> Category with store ${JSON.stringify(category || {})}`)
-            return parseProduct(blingProduct, product && product.variations, storeId, auth, method === 'POST', appData)
-              .then(product => {
-                if (!isNaN(quantity)) {
-                  product.quantity = quantity >= 0 ? quantity : 0
-                }
-                logger.info(`#${storeId} ${method} ${endpoint}`)
-
-                return appSdk.apiRequest(storeId, endpoint, method, product, auth)
-              })
-          }
-
-          logger.info(`#${storeId} ${JSON.stringify({ sku, productId, hasVariations, variationId })}`)
-          let job
-          if (blingStockUpdate && isHiddenQueue && !appData.update_product_auto && !appData.import_product) {
-            job = handleBlingStock(blingStockUpdate, true)
-          } else {
-            job = bling.get('/produtos', {
-              params: {
-                codigo: sku
-              }
-            }).then(({ data }) => {
-              const responseData = data && data.data
-              if (responseData && Array.isArray(responseData) && responseData.length) {
-                const blingProduct = responseData.find(({ codigo }) => blingProductCode === String(codigo))
-                if (blingProduct) {
-                  bling.get(`/produtos/${blingProduct.id}`)
-                    .then((res) => {
-                      const blingData = res.data && res.data.data
-                      if (blingData) {
-                        logger.info(`> Produto bling: ${JSON.stringify(blingData)}`)
-                        return handleBlingStock(blingData)
+                  if (blingProductData.variacoes.length) {
+                    blingProductData.variacoes.forEach(variation => {
+                      const stokeVariation = blingProductStoke.find(stoke => stoke.produto.id === variation.id)
+                      if (stokeVariation) {
+                        Object.assign(variation, { depositos: stokeVariation.depositos })
                       }
                     })
+                  }
                 }
-              }
-              logger.info(`The returned product is ${JSON.stringify(data?.data)}`)
-              const msg = `SKU ${sku} não encontrado no Bling`
-              const err = new Error(msg)
-              err.isConfigError = true
-              throw new Error(err)
-            })
-          }
 
-          handleJob({ appSdk, storeId }, queueEntry, job)
+                return blingProductData
+              }
+            }
+          }
+          logger.info(`The returned product is ${JSON.stringify(data?.data)}`)
+          const msg = `SKU ${sku} não encontrado no Bling`
+          const err = new Error(msg)
+          err.isConfigError = true
+          throw new Error(err)
         })
+      logger.info(`> Produto bling: ${JSON.stringify(blingProduct)}`)
+
+      const { product, variationId } = payload
+      const isStockOnly = Boolean(product && !(appData.update_product || appData.update_product_auto))
+      return createUpdateProduct({ appSdk, storeId, auth }, appData, sku, product, variationId, blingDeposit, blingProduct, isStockOnly)
+    })
+    .catch(err => {
+      if (err.name === 'Skip') {
+        logger.info(`#${storeId} skipping ${sku} / ${productId}`)
+        return { status: 'skipping' }
+      }
+
+      throw err
     })
 }

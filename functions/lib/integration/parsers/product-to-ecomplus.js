@@ -9,82 +9,82 @@ const removeAccents = str => str.replace(/áàãâÁÀÃÂ/g, 'a')
   .replace(/úÚ/g, 'u')
   .replace(/çÇ/g, 'c')
 
-  const hexaColors = color => {
-    const lowerCaseColor = removeAccents(color.toLowerCase());
-  
-    switch (lowerCaseColor) {
-      case 'azulclaro':
-        return '#add8e6';
-      case 'branco':
-      case 'branca':
-        return '#ffffff';
-      case 'cinza':
-        return '#808080';
-      case 'vermelho':
-      case 'vermelha':
-        return '#ff0000';
-      case 'amarelo':
-      case 'amarela':
-        return '#ffff00';
-      case 'verde':
-        return '#008000';
-      case 'preto':
-      case 'preta':
-        return '#000000';
-      case 'azul':
-        return '#0000ff';
-      case 'petroleo':
-        return '#006666';
-      case 'verde limao':
-        return '#32cd32';
-      case 'rosa':
-      case 'pink':
-        return '#ffc0cb';
-      case 'roxo':
-        return '#800080';
-      case 'laranja':
-      case 'laranjao':
-        return '#ffa500';
-      case 'muffin':
-        return '#d6a78a';
-      case 'off':
-      case 'offwhite':
-      case 'off-white':
-      case 'off white':
-        return '#fffafa';
-      case 'marrom':
-        return '#a52a2a';
-      case 'areia':
-        return '#f0e68c';
-      case 'vinho':
-      case 'vinha':
-        return '#800000';
-      case 'ciano':
-        return '#00ffff';
-      case 'prata':
-        return '#c0c0c0';
-      case 'grafite':
-        return '#808080';
-      case 'magento':
-        return '#ff00ff';
-      case 'dourado':
-        return '#ffd700';
-      case 'turquesa':
-        return '#40e0d0';
-      case 'chocolatebranco':
-        return '#d2691e';
-      case 'verde oliva':
-        return '#6b8e23';
-      case 'caqui':
-        return '#f0e68c';
-      case 'pessego':
-        return '#ffe5b4';
-      case 'indigo':
-        return '#4b0082';
-      default:
-        return '#ffffff'; // White (default)
-    }
-  };
+const hexaColors = color => {
+  const lowerCaseColor = removeAccents(color.toLowerCase())
+
+  switch (lowerCaseColor) {
+    case 'azulclaro':
+      return '#add8e6'
+    case 'branco':
+    case 'branca':
+      return '#ffffff'
+    case 'cinza':
+      return '#808080'
+    case 'vermelho':
+    case 'vermelha':
+      return '#ff0000'
+    case 'amarelo':
+    case 'amarela':
+      return '#ffff00'
+    case 'verde':
+      return '#008000'
+    case 'preto':
+    case 'preta':
+      return '#000000'
+    case 'azul':
+      return '#0000ff'
+    case 'petroleo':
+      return '#006666'
+    case 'verde limao':
+      return '#32cd32'
+    case 'rosa':
+    case 'pink':
+      return '#ffc0cb'
+    case 'roxo':
+      return '#800080'
+    case 'laranja':
+    case 'laranjao':
+      return '#ffa500'
+    case 'muffin':
+      return '#d6a78a'
+    case 'off':
+    case 'offwhite':
+    case 'off-white':
+    case 'off white':
+      return '#fffafa'
+    case 'marrom':
+      return '#a52a2a'
+    case 'areia':
+      return '#f0e68c'
+    case 'vinho':
+    case 'vinha':
+      return '#800000'
+    case 'ciano':
+      return '#00ffff'
+    case 'prata':
+      return '#c0c0c0'
+    case 'grafite':
+      return '#808080'
+    case 'magento':
+      return '#ff00ff'
+    case 'dourado':
+      return '#ffd700'
+    case 'turquesa':
+      return '#40e0d0'
+    case 'chocolatebranco':
+      return '#d2691e'
+    case 'verde oliva':
+      return '#6b8e23'
+    case 'caqui':
+      return '#f0e68c'
+    case 'pessego':
+      return '#ffe5b4'
+    case 'indigo':
+      return '#4b0082'
+    default:
+      return '#ffffff' // White (default)
+  }
+}
 
 const tryImageUpload = (storeId, auth, originImgUrl, product) => new Promise(resolve => {
   axios.get(originImgUrl, {
@@ -220,7 +220,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
     }
   }
 
-  ;[
+  [
     ['largura', 'width'],
     ['altura', 'height'],
     ['profundidade', 'length']
@@ -248,7 +248,6 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
           gridsAndValues.forEach(gridAndValue => {
             const [gridName, text] = gridAndValue.trim().split(':')
             if (gridName && text) {
-
               const gridId = gridName.toLowerCase() === 'cor'
                 ? 'colors'
                 : removeAccents(gridName.toLowerCase())
@@ -272,35 +271,34 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
           })
 
           // Helper function to extract base URL (ignoring query parameters)
-        function getBaseUrl(url) {
-            const urlObj = new URL(url);
-            return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`;
-        }
+          function getBaseUrl (url) {
+            const urlObj = new URL(url)
+            return `${urlObj.protocol}//${urlObj.hostname}${urlObj.pathname}`
+          }
 
-        // Helper function to update externas while avoiding duplicates
-        function updateExternas(newMedia) {
-            const existingLinks = new Set(blingProduct.midia.imagens.externas.map(item => getBaseUrl(item.link)));
+          // Helper function to update externas while avoiding duplicates
+          function updateExternas (newMedia) {
+            const existingLinks = new Set(blingProduct.midia.imagens.externas.map(item => getBaseUrl(item.link)))
 
             newMedia.midia.imagens.externas.forEach(({ link }) => {
-                let baseUrl = getBaseUrl(link);
-                if (!existingLinks.has(baseUrl)) {
-                    blingProduct.midia.imagens.externas.push({ link });
-                    existingLinks.add(baseUrl); // Add base URL to set to keep track of what has been added
-                }
-            });
-        }
+              const baseUrl = getBaseUrl(link)
+              if (!existingLinks.has(baseUrl)) {
+                blingProduct.midia.imagens.externas.push({ link })
+                existingLinks.add(baseUrl) // Add base URL to set to keep track of what has been added
+              }
+            })
+          }
 
           if (specTexts.length) {
             const { midia, codigo, preco, gtin, gtinEmbalagem, dimensoes, pesoBruto, pesoLiq, tributacao, id } = variacao
             let pictureId = 0
             if (midia && midia.imagens && Array.isArray(midia.imagens.externas) && midia.imagens.externas.length) {
-                midia.imagens.externas.forEach(({link}) => updateExternas({link}))
-                pictureId = midia.imagens.externas.length - 1
-              
+              midia.imagens.externas.forEach(({ link }) => updateExternas({ link }))
+              pictureId = midia.imagens.externas.length - 1
             }
             let variation
             if (variations && variations.length) {
-              const variationIndex = variations.findIndex(({ sku }) => sku === variacao.codigo)
+              const variationIndex = variations.findIndex(({ sku }) => sku === codigo)
               if (variationIndex > -1) {
                 variation = variations[variationIndex]
               }
@@ -314,7 +312,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
             variation.name = `${name} / ${specTexts.join(' / ')}`.substring(0, 100)
             variation.sku = codigo || String(id)
             variation.specifications = specifications
-            variation.quantity = 0
+            variation.quantity = variacao.estoqueAtual || 0
             if (pictureId > 0) {
               variation.picture_id = pictureId
             }
@@ -329,7 +327,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
               }
             }
             if (dimensoes && dimensoes.largura) {
-              ;[
+              [
                 ['largura', 'width'],
                 ['altura', 'height'],
                 ['profundidade', 'length']
@@ -387,6 +385,6 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
       }
       return resolve(product)
     })
-  } 
+  }
   resolve(product)
 })

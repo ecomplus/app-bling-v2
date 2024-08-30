@@ -15,7 +15,7 @@ const getLastStatus = records => {
   return statusRecord && statusRecord.status
 }
 
-module.exports = async ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData) => {
+module.exports = async ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, _, appData) => {
   const blingOrderNumber = queueEntry.nextId
   const {
     client_id: clientId,

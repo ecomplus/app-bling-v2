@@ -4,7 +4,7 @@ const { logger } = require('./../../context')
 const errorHandling = require('../store-api/error-handling')
 const Bling = require('../bling-auth/client')
 const parseProduct = require('./parsers/product-to-bling')
-const handleJob = require('./handle-job')
+// const handleJob = require('./handle-job')
 const url = require('url')
 
 const getBlingStockId = (blingApi, blingProductId) => {
@@ -21,7 +21,7 @@ const getBlingStockId = (blingApi, blingProductId) => {
   }).catch(console.error)
 }
 
-module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEntry, appData, canCreateNew) => {
+module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
   const productId = queueEntry.nextId
   logger.info(`>> export products to bling ${productId}`)
   const { client_id: clientId, client_secret: clientSecret } = appData
@@ -49,22 +49,29 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
       }
       // Bling Requests
       const blingApi = new Bling(clientId, clientSecret, storeId)
+      const urlParams = { codigo: blingProductCode }
+      if (blingStore) {
+        urlParams.idLoja = blingStore
+      }
 
-      const job = blingApi.get('/produtos', {
-        params: {
-          codigo: blingProductCode,
-          idLoja: blingStore
-        }
-      })
+      const params = new url.URLSearchParams(urlParams)
+      const endpoint = `/produtos${blingProductId ? `/${blingProductId}` : `?${params.toString()}`}`
+      let bodyBlingProduct
+
+      const job = blingApi.get(endpoint)
         .catch(err => {
           if (err.response && err.response.status === 404) {
+            if (blingProductId) {
+              return blingApi.get(`/produtos?${params.toString()}`)
+            }
             return { data: [] }
           }
           throw err
         })
 
         .then(async ({ data: { data: blingProducts } }) => {
-          if (blingProducts && Array.isArray(blingProducts)) {
+          console.log(`${blingProductId} p: ${JSON.stringify(blingProducts)}`)
+          if (blingProducts && Array.isArray(blingProducts) && blingProducts.length) {
             originalBlingProduct = blingProducts.find(({ codigo }) => product.sku === String(codigo))
 
             // Check blingProductId and update
@@ -75,120 +82,117 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
             }
           }
           if (canCreateNew || appData.export_quantity || !blingStore) {
-            if (originalBlingProduct) {
-              originalBlingProduct = await blingApi.get(`/produtos/${blingProductId}`)
+            if (!originalBlingProduct && blingProductId) {
+              originalBlingProduct = blingProductId && await blingApi.get(`/produtos/${blingProductId}`)
                 .then(({ data: { data: productBling } }) => productBling)
             }
-            const blingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
-            logger.info('>body ', JSON.stringify(blingProduct))
-            if (blingProduct) {
-              const endpoint = originalBlingProduct ? `/produtos/${blingProductId}` : '/produtos'
+            console.log(`original ${JSON.stringify(originalBlingProduct)}`)
+            bodyBlingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
+            logger.info('>body ', JSON.stringify(bodyBlingProduct))
+            if (bodyBlingProduct) {
+              const endpoint = `/produtos${originalBlingProduct ? `/${blingProductId}` : ''}`
               if (originalBlingProduct) {
                 // TODO: remove debug
                 logger.info('>> Put Bling ', endpoint)
 
                 // TODO: it isn't updating stock. Why?
-                return blingApi.put(endpoint, blingProduct)
+                return blingApi.put(endpoint, bodyBlingProduct)
               }
               // TODO: remove debug
               logger.info('>> Post Bling')
-              return blingApi.post(endpoint, blingProduct)
+              return blingApi.post(endpoint, bodyBlingProduct)
             }
           }
           return null
         })
 
         .then(async (response) => {
-          let estoqueId = (metafields.find(({ field }) => field === 'bling:estoqueId'))?.value
-          if (!originalBlingProduct) {
-            const responseData = response.data && response.data.data
-            if (responseData) {
-              blingProductId = String(responseData.id)
+          const responseData = response?.data?.data
+          // console.log(`> create: ${JSON.stringify(responseData)}`)
+          if (!metafields) {
+            metafields = []
+          }
 
-              if (!metafields) {
-                metafields = []
-              }
+          if (responseData) {
+            blingProductId = String(responseData.id)
 
-              estoqueId = await getBlingStockId(blingApi, blingProductId)
-
-              if (estoqueId) {
-                metafields.push({
-                  _id: ecomUtils.randomObjectId(),
-                  namespace: 'bling',
-                  field: 'bling:estoqueId',
-                  value: String(estoqueId)
-                })
-              }
-
-              if (blingProductCode) {
-                metafields.push({
-                  _id: ecomUtils.randomObjectId(),
-                  namespace: 'bling',
-                  field: 'bling:codigo',
-                  value: String(blingProductCode)
-                })
-              }
-
+            if (blingProductCode) {
               metafields.push({
                 _id: ecomUtils.randomObjectId(),
                 namespace: 'bling',
-                field: 'bling:id',
-                value: blingProductId
+                field: 'bling:codigo',
+                value: String(blingProductCode)
               })
-
-              appSdk.apiRequest(
-                storeId,
-                `products/${productId}.json`,
-                'PATCH',
-                { metafields },
-                auth
-              ).catch(logger.error)
-            }
-          } else if (appData.export_quantity && !estoqueId) {
-            estoqueId = await getBlingStockId(blingApi, blingProductId)
-            if (estoqueId) {
-              metafields.push({
-                _id: ecomUtils.randomObjectId(),
-                namespace: 'bling',
-                field: 'bling:estoqueId',
-                value: String(estoqueId)
-              })
-
-              appSdk.apiRequest(
-                storeId,
-                `products/${productId}.json`,
-                'PATCH',
-                { metafields },
-                auth
-              ).catch(logger.error)
             }
           }
 
-          const hasVariations = product.variations && product.variations.length
+          const estoqueId = blingDeposit || await getBlingStockId(blingApi, blingProductId)
+          if (blingProductId && (!metafields.length || !originalBlingProduct)) {
+            metafields.push({
+              _id: ecomUtils.randomObjectId(),
+              namespace: 'bling',
+              field: 'bling:id',
+              value: blingProductId
+            })
+          }
+
+          if (metafields.length) {
+            appSdk.apiRequest(
+              storeId,
+              `products/${productId}.json`,
+              'PATCH',
+              { metafields },
+              auth
+            ).catch(logger.error)
+          }
+
+          // console.log(`original: ${JSON.stringify(originalBlingProduct)}`)
+          const isVariations = Boolean(product.variations && product.variations.length)
           // TODO: handle stock if exists variations
 
           const blingQuantity = originalBlingProduct?.quantity
-          const productQuantity = !hasVariations ? product?.quantity : 0
-          const isUpdateStock = (appData.export_quantity || !originalBlingProduct) &&
-            (!hasVariations ? blingQuantity !== productQuantity : false)
-          logger.info(`> Update stock ${isUpdateStock} estoqueId: ${JSON.stringify(estoqueId)}`)
+          const productQuantity = !isVariations ? product?.quantity : 0
+          const isUpdateStock = appData.export_quantity === true || Boolean(!originalBlingProduct)
 
-          if (isUpdateStock && estoqueId) {
+          const promise = []
+          if (isUpdateStock && estoqueId && !isVariations && blingQuantity !== productQuantity) {
             const bodyStock = {
-              produto: {
-                id: Number(blingProductId)
-              },
-              deposito: {
-                id: Number(estoqueId)
-              },
+              produto: { id: Number(blingProductId) },
+              deposito: { id: Number(estoqueId) },
               operacao: 'B',
               quantidade: productQuantity,
               observacoes: `Update in ${new Date().toISOString()}`
             }
 
-            await blingApi.post('/estoques', bodyStock)
+            promise.push(blingApi.post('/estoques', bodyStock)
               .catch(logger.error)
+            )
+          } else if (isVariations && estoqueId) {
+            const newVariations = responseData.variations.saved
+
+            product.variations.forEach((variation) => {
+              const variationFind = bodyBlingProduct.variacoes.find(({ nome }) => nome === variation.name)
+              const newVariation = newVariations.find(({ nomeVariacao }) => nomeVariacao === variationFind.variacao?.nome)
+              const isUpdateStockVariation = appData.export_quantity === true || Boolean(newVariation)
+
+              // console.log(`${isUpdateStockVariation} ${appData.export_quantity} ${JSON.stringify(variationFind)}`)
+              if (variationFind && isUpdateStockVariation) {
+                const bodyStock = {
+                  produto: { id: Number((newVariation || variationFind).id) },
+                  deposito: { id: Number(estoqueId) },
+                  operacao: 'B',
+                  quantidade: variation.quantity || 0,
+                  observacoes: `Update in ${new Date().toISOString()}`
+                }
+
+                promise.push(blingApi.post('/estoques', bodyStock)
+                  .catch(logger.error)
+                )
+              }
+            })
           }
+
+          await Promise.all(promise)
 
           return response
         })
@@ -196,14 +200,16 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
         .catch(err => {
           const data = err.response?.data
           if (data) {
-            logger.warn(data)
+            logger.warn((data && JSON.stringify(data)) || JSON.stringify(err.response))
             logger.error(err.response)
           } else {
             logger.error(err)
           }
+          throw err
         })
 
-      handleJob({ appSdk, storeId }, queueEntry, job)
+      // handleJob({ appSdk, storeId }, queueEntry, job)
+      return job
     })
 
     .catch(err => {
@@ -213,8 +219,8 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
           const msg = `O produto ${productId} não existe (:${status})`
           const err = new Error(msg)
           err.isConfigError = true
-          handleJob({ appSdk, storeId }, queueEntry, Promise.reject(err))
-          return null
+          // handleJob({ appSdk, storeId }, queueEntry, Promise.reject(err))
+          // return err
         }
       }
       errorHandling(err)

@@ -26,7 +26,9 @@ exports.get = async ({ appSdk, admin }, req, res) => {
                 await getFirestore().doc(`${firestoreColl}/${storeId}`).set({
                   ...data,
                   expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000)),
-                  createdAt: now
+                  createdAt: now,
+                  updatedAt: now,
+                  isBloqued: false
                 })
               })
               const blingApi = new Bling(clientId, clientSecret, storeId)
@@ -35,7 +37,9 @@ exports.get = async ({ appSdk, admin }, req, res) => {
               logger.info(`contatos ${JSON.stringify(contatTypeClient)}`)
 
               if (contatTypeClient) {
-                await updateAppData({ appSdk, storeId, auth }, { _contatTypeClientId: contatTypeClient.id }, true)
+                const otherConfig = appData.other_config || {}
+                Object.assign(otherConfig, { _contatTypeClientId: contatTypeClient.id })
+                await updateAppData({ appSdk, storeId, auth }, { other_config: otherConfig }, true)
                   .catch(err => logger.error(err))
               }
               return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')

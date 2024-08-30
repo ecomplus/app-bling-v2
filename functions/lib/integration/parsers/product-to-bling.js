@@ -1,14 +1,14 @@
 const ecomUtils = require('@ecomplus/utils')
 
 module.exports = (product, originalBlingProduct, blingProductCode, blingStore, appData) => {
-  const hasVariations = product.variations && product.variations.length
+  const isVariations = Boolean(product.variations && product.variations.length)
 
   const blingProduct = {
     nome: product.name || '',
     codigo: product.sku || product._id,
     tipo: 'P',
     situacao: product.available && product.visible ? 'A' : 'I',
-    formato: hasVariations ? 'V' : 'S',
+    formato: isVariations ? 'V' : 'S',
     preco: ecomUtils.price(product),
     descricaoCurta: product.body_html || product.short_description || product.body_text,
     descricaoComplementar: product.short_description,
@@ -103,7 +103,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
   }
 
   // Stock
-  if (!hasVariations) {
+  if (!isVariations) {
     if (
       typeof product.quantity === 'number' &&
       (!originalBlingProduct || appData.export_quantity)
@@ -116,7 +116,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
     }
   }
 
-  if (hasVariations) {
+  if (isVariations) {
     blingProduct.variacoes = []
 
     product.variations.forEach((variation, i) => {
@@ -130,8 +130,13 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
         tipo: 'P',
         situacao: product.available && product.visible ? 'A' : 'I',
         formato: 'S',
-        preco: ecomUtils.price({ ...product, ...variation }),
-        codigo
+        preco: ecomUtils.price({ ...product, ...variation })
+      }
+
+      blingVariation.codigo = blingVariationOriginal?.codigo || codigo
+
+      if (blingVariationOriginal?.id) {
+        blingVariation.id = blingVariationOriginal.id
       }
 
       // Stock Variation
@@ -192,7 +197,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
 
       const variacao = {
         nome: '',
-        ordem: i,
+        ordem: blingVariation?.variacao?.ordem || i,
         produtoPai: { cloneInfo: Boolean(!variation.dimensions) }
       }
 
@@ -219,7 +224,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
             }
             if (variacao.nome) {
               variacao.nome += ';'
-              variacao.ordem = i + 1
+              variacao.ordem = blingVariation?.variacao?.ordem || i + 1
               if (i > 0) {
                 gridTitle += i === 1 ? ' secundária' : ` ${(i + 1)}`
               }
@@ -230,10 +235,6 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
       }
 
       blingVariation.variacao = variacao
-
-      if (blingVariationOriginal) {
-        blingVariation.id = blingVariationOriginal.id
-      }
 
       blingProduct.variacoes.push(blingVariation)
     })

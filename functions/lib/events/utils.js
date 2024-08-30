@@ -1,4 +1,14 @@
-const { logger } = require('./../../context')
+const admin = require('firebase-admin')
+const { setup } = require('@ecomplus/application-sdk')
+
+const getAppSdk = () => {
+  return new Promise(resolve => {
+    setup(null, true, admin.firestore())
+      .then(appSdk => resolve(appSdk))
+  })
+}
+
+const { logger } = require('../../context')
 const getAppData = require('../store-api/get-app-data')
 const updateAppData = require('../store-api/update-app-data')
 
@@ -188,26 +198,7 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
     .catch(logger.error)
 }
 
-const handleJob = (appSession, queueEntry, job) => {
-  job
-    .then(payload => {
-      if (payload && typeof payload.then === 'function') {
-        handleJob(appSession, queueEntry, payload)
-      } else if (!queueEntry.isNotQueued) {
-        log(appSession, queueEntry, payload)
-      } else if (typeof queueEntry.cb === 'function') {
-        queueEntry.cb(null, true)
-      }
-      return true
-    })
-    .catch(err => {
-      if (!queueEntry.isNotQueued) {
-        return log(appSession, queueEntry, err)
-      }
-      if (typeof queueEntry.cb === 'function') {
-        queueEntry.cb(err, false)
-      }
-    })
+module.exports = {
+  getAppSdk,
+  log
 }
-
-module.exports = handleJob

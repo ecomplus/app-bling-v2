@@ -6,7 +6,7 @@ const errorHandling = require('../store-api/error-handling')
 const Bling = require('../bling-auth/client')
 const parseOrder = require('./parsers/order-to-bling/')
 const parseStatus = require('./parsers/order-to-bling/status')
-const handleJob = require('./handle-job')
+// const handleJob = require('./handle-job')
 const url = require('url')
 const getCustomerBling = require('./utils/get-customer-bling')
 const getProductsBling = require('./utils/get-products-bling')
@@ -227,7 +227,8 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
           return {}
         })
 
-        .then(({ blingStatus }) => {
+        .then((response) => {
+          const blingStatus = response?.blingStatus
           // console.log(` have status ${blingOrderId}: ${JSON.stringify(blingStatus)}`)
           if (blingOrderId) {
             const getParseStatusBling = (situacoes) => {
@@ -284,7 +285,8 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
           }
           return null
         })
-      handleJob({ appSdk, storeId }, queueEntry, job)
+      // handleJob({ appSdk, storeId }, queueEntry, job)
+      return job
     })
 
     .catch(err => {
@@ -294,8 +296,8 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
           const msg = `O pedido ${orderId} não existe (:${status})`
           const err = new Error(msg)
           err.isConfigError = true
-          handleJob({ appSdk, storeId }, queueEntry, Promise.reject(err))
-          return null
+          // handleJob({ appSdk, storeId }, queueEntry, Promise.reject(err))
+          return err
         }
       }
       errorHandling(err)

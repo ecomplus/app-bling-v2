@@ -3,8 +3,11 @@ const { AsyncLocalStorage } = require('node:async_hooks')
 
 const asyncLocalStorage = new AsyncLocalStorage()
 
-const createExecContext = (req, res, next) => {
-  return asyncLocalStorage.run({ execId: `${Date.now() + Math.random()}` }, () => { next() })
+// const createContextExpress = (req, res, next) => {
+//   return asyncLocalStorage.run({ execId: `${Date.now() + Math.random()}` }, () => { next() })
+// }
+const createExecContex = (next) => {
+  return (...args) => asyncLocalStorage.run({ execId: `${Date.now() + Math.random()}` }, () => next(...args))
 }
 
 const log = (level, msg, d) => {
@@ -30,6 +33,6 @@ const logger = {
 
 module.exports = {
   asyncLocalStorage,
-  createExecContext,
+  createExecContex,
   logger
 }
