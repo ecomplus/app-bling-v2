@@ -1,9 +1,7 @@
-// const { firestore } = require('firebase-admin')
 const { logger } = require('./../../context')
 const Bling = require('../bling-auth/client')
 const parseOrder = require('./parsers/order-to-ecomplus/')
 const parseStatus = require('./parsers/order-to-ecomplus/status')
-// const handleJob = require('./handle-job')
 
 const getLastStatus = records => {
   let statusRecord

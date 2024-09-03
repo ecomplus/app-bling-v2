@@ -87,21 +87,22 @@ module.exports = (order, blingOrderNumber, blingStore, appData, customerIdBling,
         shippingService = blingShipping.find(shippingFind =>
           shippingFind.ecom_shipping && shippingFind.ecom_shipping.toLowerCase() === shippingLine.app.label?.toLowerCase()
         )
-        if (!originalBlingOrder || !originalBlingOrder.transporte?.volumes?.length) {
-          blingOrder.transporte.volumes = [{
-            servico: shippingService ? shippingService.bling_shipping : shippingLine.app.service_code
-          }]
-        }
-
-        if (shippingLine.package && shippingLine.package.weight) {
-          const { unit, value } = shippingLine.package.weight
-          blingOrder.transporte.pesoBruto = unit === 'g'
-            ? value / 1000
-            : unit === 'mg'
-              ? value / 1000000
-              : value
-        }
       }
+      if (!originalBlingOrder || !originalBlingOrder.transporte?.volumes?.length) {
+        blingOrder.transporte.volumes = [{
+          servico: shippingService ? shippingService.bling_shipping : shippingLine.app.service_code
+        }]
+      }
+
+      if (shippingLine.package && shippingLine.package.weight) {
+        const { unit, value } = shippingLine.package.weight
+        blingOrder.transporte.pesoBruto = unit === 'g'
+          ? value / 1000
+          : unit === 'mg'
+            ? value / 1000000
+            : value
+      }
+
       if (shippingAddress) {
         blingOrder.transporte.etiqueta = {}
         parseAddress(shippingAddress, blingOrder.transporte.etiqueta)
