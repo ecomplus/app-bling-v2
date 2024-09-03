@@ -1,21 +1,8 @@
 const ecomUtils = require('@ecomplus/utils')
-// const parseAddress = require('./parsers/address-to-bling')
+const parseAddress = require('../address-to-bling')
 
-// const formatDate = date => {
-//   const d = new Date(date.getTime() - (3 * 60 * 60 * 1000))
-//   return d.getDate().toString().padStart(2, '0') + '/' +
-//     (d.getMonth() + 1).toString().padStart(2, '0') + '/' +
-//     d.getFullYear()
-// }
-
-module.exports = (order, _blingOrderNumber, blingStore, appData, customerIdBling, paymentTypeId, itemsBling) => {
-  // TODO: Shipping
+module.exports = (order, blingOrderNumber, blingStore, appData, customerIdBling, paymentTypeId, itemsBling, originalBlingOrder) => {
   try {
-    // const {
-    //   parse_payment: parsePayment,
-    //   parse_shipping: parseShipping,
-    //   parse_status: parseStatus
-    // } = appData
     const { amount } = order
 
     const blingOrder = {
@@ -25,7 +12,7 @@ module.exports = (order, _blingOrderNumber, blingStore, appData, customerIdBling
       contato: { id: customerIdBling }
     }
     if (order.number && !appData.disable_order_number) {
-      blingOrder.numero = /* appData.random_order_number === true ? blingOrderNumber : */ order.number
+      blingOrder.numero = appData.random_order_number === true ? blingOrderNumber : order.number
     }
     if (blingStore) {
       blingOrder.loja = {
@@ -33,14 +20,10 @@ module.exports = (order, _blingOrderNumber, blingStore, appData, customerIdBling
       }
     }
 
-    // // const buyer = order.buyers && order.buyers[0]
     const shippingLine = order.shipping_lines && order.shipping_lines[0]
     const transaction = order.transactions && order.transactions[0]
-    // const shippingAddress = shippingLine && shippingLine.to
-    // // const billingAddress = transaction && transaction.billing_address
+    const shippingAddress = shippingLine && shippingLine.to
 
-    // console.log(`order transaction: ${JSON.stringify(transaction)}`)
-    // let notesForCustomization = ''
     if (order.items && order.items.length) {
       blingOrder.itens = []
       order.items.forEach(item => {
@@ -59,11 +42,6 @@ module.exports = (order, _blingOrderNumber, blingStore, appData, customerIdBling
             Object.assign(itemToBling, { produto: { id: productBlingId } })
           }
           blingOrder.itens.push(itemToBling)
-          // if (item.customizations && item.customizations.length) {
-          //   item.customizations.forEach(customization => {
-          //     notesForCustomization += `${customization.label} ${customization.option && customization.option.text} - ${item.sku}`
-          //   })
-          // }
         }
       })
     }
@@ -103,51 +81,38 @@ module.exports = (order, _blingOrderNumber, blingStore, appData, customerIdBling
 
     if (shippingLine) {
       blingOrder.transporte = {}
-      // if (shippingLine.app) {
-      //   const { carrier } = shippingLine.app
-      //   if (carrier) {
-      //     blingOrder.transporte.transportadora = carrier
-      //     if (shippingLine.app.service_name) {
-      //       if (/correios/i.test(carrier) || /(pac|sedex)/i.test(shippingLine.app.service_name)) {
-      //         blingOrder.transporte.servico_correios = shippingLine.app.service_name
-      //       }
-      //     }
-      //   }
-      //   if (!blingOrder.transporte.servico_correios && shippingLine.app.label) {
-      //     blingOrder.transporte.servico_correios = shippingLine.app.label
-      //   }
-      //   if (!blingOrder.transporte.transportadora && shippingLine.app.label) {
-      //     blingOrder.transporte.transportadora = shippingLine.app.label
-      //   }
-      // }
-      // if (!blingOrder.transporte.transportadora && order.shipping_method_label) {
-      //   blingOrder.transporte.transportadora = order.shipping_method_label
-      // }
-      if (shippingLine.package && shippingLine.package.weight) {
-        const { unit, value } = shippingLine.package.weight
-        blingOrder.transporte.pesoBruto = unit === 'g'
-          ? value / 1000
-          : unit === 'mg'
-            ? value / 1000000
-            : value
-      }
+      let shippingService
+      const blingShipping = appData.parse_shipping
+      if (shippingLine.app && blingShipping && blingShipping.length) {
+        shippingService = blingShipping.find(shippingFind =>
+          shippingFind.ecom_shipping && shippingFind.ecom_shipping.toLowerCase() === shippingLine.app.label?.toLowerCase()
+        )
+        if (!originalBlingOrder || !originalBlingOrder.transporte?.volumes?.length) {
+          blingOrder.transporte.volumes = [{
+            servico: shippingService ? shippingService.bling_shipping : shippingLine.app.service_code
+          }]
+        }
 
-      // if (shippingAddress) {
-      //   blingOrder.transporte.dados_etiqueta = {}
-      //   parseAddress(shippingAddress, blingOrder.transporte.dados_etiqueta, 'municipio')
-      // }
+        if (shippingLine.package && shippingLine.package.weight) {
+          const { unit, value } = shippingLine.package.weight
+          blingOrder.transporte.pesoBruto = unit === 'g'
+            ? value / 1000
+            : unit === 'mg'
+              ? value / 1000000
+              : value
+        }
+      }
+      if (shippingAddress) {
+        blingOrder.transporte.etiqueta = {}
+        parseAddress(shippingAddress, blingOrder.transporte.etiqueta)
+      }
     }
 
     if (typeof amount.freight === 'number') {
       if (!(blingOrder.transporte && Object.keys(blingOrder.transporte).length)) {
         blingOrder.transporte = {}
       }
-      // if (!blingOrder.taxas) blingOrder.taxas = {}
-      // if (!blingOrder.taxas.custoFrete) blingOrder.taxas.custoFrete = amount.freight
       blingOrder.transporte.frete = amount.freight
-      // if (amount.tax) {
-      //   blingOrder.transporte.frete += amount.tax
-      // }
     }
 
     if (amount.discount) {
@@ -169,35 +134,6 @@ module.exports = (order, _blingOrderNumber, blingStore, appData, customerIdBling
     if (order.notes) {
       blingOrder.observacoes = order.notes
     }
-    // if (!blingOrder.obs && notesForCustomization.length) {
-    //   blingOrder.obs = notesForCustomization
-    // } else if (blingOrder.obs && notesForCustomization.length) {
-    //   blingOrder.obs += ` ${notesForCustomization}`
-    // }
-    // if (order.staff_notes) {
-    //   blingOrder.obs_internas = order.staff_notes.substring(0, 250)
-    // }
-
-    // if (appData.bling_order_data) {
-    //   for (const field in appData.bling_order_data) {
-    //     let value = appData.bling_order_data[field]
-    //     switch (value) {
-    //       case undefined:
-    //       case '':
-    //       case null:
-    //         break
-    //       default:
-    //         if (typeof value === 'string') {
-    //           value = value.trim()
-    //           if (value) {
-    //             blingOrder[field] = value
-    //           }
-    //         } else {
-    //           blingOrder[field] = value
-    //         }
-    //     }
-    //   }
-    // }
 
     return blingOrder
   } catch (err) {

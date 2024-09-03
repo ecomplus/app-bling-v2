@@ -7,8 +7,6 @@ const handleEvents = require('./lib/events/handle-events')
 const path = require('path')
 const recursiveReadDir = require('./lib/recursive-read-dir')
 
-// const handleEventBling = require('./lib/pubsub/webhook-bling')
-
 // Firebase SDKs to setup cloud functions and access Firestore database
 const admin = require('firebase-admin')
 const functions = require('firebase-functions')
@@ -152,28 +150,9 @@ console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 exports.eventsEcomplus = functions.firestore
   .document(`${nameCollectionEvents}_ecomplus/{docId}`)
   .onWrite(createExecContex(handleEvents))
+console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 
 exports.eventsBling = functions.firestore
   .document(`${nameCollectionEvents}_bling/{docId}`)
   .onWrite(createExecContex(handleEvents))
-
-// update token job bling
-// const updateBlingToken = require('./lib/bling-auth/renovate-token')
-// const cronUpdateBlingToken = '1 */2 * * *'
-// exports.syncBlingToken = functions.pubsub.schedule(cronUpdateBlingToken).onRun(updateBlingToken)
-// console.log(`-- Sheduled active access from bling '${cronUpdateBlingToken}'`)
-
-// schedule active check queues from Store API
-/* const checkIdleQueues = require('./lib/integration/check-idle-queues')
-const queueFallbackCron = 'every 60 mins'
-exports.scheduledSync = functions.pubsub.schedule(queueFallbackCron).onRun(checkIdleQueues)
-console.log(`-- Sheduled active check idle queues from Store API '${queueFallbackCron}'`) */
-
-// delete old stored Bling order states
-/* const clearOrderStates = require('./lib/integration/clear-order-states')
-const clearStatesCron = '56 13 * * *'
-exports.scheduledClear = functions.pubsub.schedule(clearStatesCron).onRun(clearOrderStates)
-console.log(`-- Sheduled clearing order stored states '${clearStatesCron}'`) */
-
-// exports.onBlingEvents = require('./lib/pubsub/create-topic')
-//   .createEventsFunction('bling', handleEventBling)
+console.log('-- Starting events Bling with Function \'eventsBling\'')

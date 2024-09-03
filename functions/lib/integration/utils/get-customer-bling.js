@@ -7,7 +7,8 @@ module.exports = async (blingAxios, appData, order) => {
   const _contatTypeClientId = appData.outher_config?._contatTypeClientId
   const buyer = order.buyers && order.buyers[0]
   const urlParams = {
-    numeroDocumento: buyer.doc_number
+    numeroDocumento: buyer.doc_number,
+    criterio: 1 // Todos
   }
   const params = new url.URLSearchParams(urlParams)
   const contato = await blingAxios.get(`/contatos?${params.toString()}`)
@@ -16,7 +17,7 @@ module.exports = async (blingAxios, appData, order) => {
     })
     .catch(logger.error)
 
-  if (contato) {
+  if (contato && contato.situacao === 'A') {
     return contato.id
   }
 
@@ -45,7 +46,6 @@ module.exports = async (blingAxios, appData, order) => {
       ;['celular', 'tel'].forEach((blingCustomerField, i) => {
         const phone = buyer.phones && buyer.phones[i]
         if (phone) {
-          // blingCustomer[blingCustomerField] = phone.country_code ? `+${phone.country_code} ` : ''
           blingCustomer[blingCustomerField] = phone.number
         }
       })
@@ -73,8 +73,10 @@ module.exports = async (blingAxios, appData, order) => {
   body.tiposContato = { id: _contatTypeClientId }
   body.situacao = 'A'
 
-  return blingAxios.post('/contatos', body)
-    .then(({ data }) => data?.data.id)
+  const method = !contato ? 'post' : 'put'
+  const endpoint = `/contatos${contato ? `/${contato.id}` : ''}`
+  return blingAxios[method](endpoint, body)
+    .then(({ data }) => contato ? contato.id : data?.data.id)
     .catch(err => {
       if (err.response) {
         logger.error(err.response)

@@ -4,11 +4,10 @@ const errorHandling = require('../store-api/error-handling')
 const Bling = require('../bling-auth/client')
 const parseOrder = require('./parsers/order-to-bling/')
 const parseStatus = require('./parsers/order-to-bling/status')
-// const handleJob = require('./handle-job')
 const url = require('url')
 const getCustomerBling = require('./utils/get-customer-bling')
 const getProductsBling = require('./utils/get-products-bling')
-const { getPaymentBling } = require('./services/payment-method')
+const { getPaymentBling } = require('./utils/payment-method')
 
 const getStatusBling = async (bling) => bling.get('/situacoes/modulos')
   .then(({ data: { data: modules } }) => {
@@ -79,13 +78,27 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
       const job = bling.get(endpoint)
         .catch(err => {
           if (err.response && err.response.status === 404) {
+            if (blingOrderId) {
+              const ed = `/pedidos/vendas?${params.toString()}`
+              console.log(`Try ${ed}`)
+              hasCreatedBlingOrder = undefined
+              blingOrderId = undefined
+              return bling.get(ed)
+                .catch(err => {
+                  if (err.response && err.response.status === 404) {
+                    logger.warn(`Order Bling not found ${endpoint}`)
+                    return { data: {} }
+                  }
+                  throw err
+                })
+            }
             logger.warn(`Order Bling not found ${endpoint}`)
             return { data: {} }
           }
           throw err
         })
         .then(async ({ data: { data } }) => {
-          // console.log('>start ')
+          console.log('>start ', JSON.stringify(data))
           const blingStatus = parseStatus(order, appData)
           const hasFoundByNumber = Boolean(Array.isArray(data) && data.length)
           let originalBlingOrder
@@ -142,7 +155,7 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
               throw new Error('Bling Item(s) not found')
             }
 
-            const blingOrder = parseOrder(order, blingOrderNumber, blingStore, appData, customerIdBling, paymentTypeId, itemsBling)
+            const blingOrder = parseOrder(order, blingOrderNumber, blingStore, appData, customerIdBling, paymentTypeId, itemsBling, originalBlingOrder)
             const endpoint = `/pedidos/vendas${blingOrderId ? `/${blingOrderId}` : ''}`
             const method = blingOrderId ? 'put' : 'post'
             logger.info(`[${method}]: ${endpoint} => ${JSON.stringify(blingOrder)}`)

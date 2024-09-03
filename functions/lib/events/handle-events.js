@@ -15,14 +15,14 @@ const integrationHandlers = {
 }
 
 module.exports = async (change, context) => {
-  const appSdk = await getAppSdk()
   const { docId } = context.params
-  logger.info(`docId: ${docId}`)
   if (!change.after.exists) {
-    console.log(`Document  #${docId} not exists`)
+    // console.log(`Document  #${docId} not exists`)
     return null
   }
 
+  const appSdk = await getAppSdk()
+  logger.info(`docId: ${docId}`)
   const doc = change.after
 
   const data = doc.data()
@@ -37,16 +37,18 @@ module.exports = async (change, context) => {
     isHiddenQueue,
     processingAt
   } = data
-  console.log(`${JSON.stringify(data)}`)
+  // console.log(`${JSON.stringify(data)}`)
 
   if (storeId > 100) {
     logger.info(`Event ${eventBy} StoreId ${storeId}`)
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < (2 * 60 * 1000)
-    logger.info(`${isProcessing} ${processingTime}ms`)
-
-    if (!isProcessing) {
+    // logger.info(`${isProcessing ? 'Processing' : ''} ${processingTime || 0}ms`)
+    if (isProcessing) {
+      logger.info(`Skip document ${docId} => is processing: ${action} ${queue} #${resourceId} time: ${processingTime} ms `)
+      return null
+    } else {
       const auth = await appSdk.getAuth(storeId)
       const promises = await Promise.all([
         getAppData({ appSdk, storeId, auth }, true),
@@ -71,7 +73,7 @@ module.exports = async (change, context) => {
             canCreateNew,
             isHiddenQueue
           ).then(async (response) => {
-            console.log('Finish export', queue, JSON.stringify(response?.data))
+            logger.info(`>Finish ${action} ${queue} ${resourceId} [${docId}]`)
             await doc.ref
               .delete()
               .catch(logger.error)
@@ -86,8 +88,6 @@ module.exports = async (change, context) => {
             })
         }
       }
-    } else {
-      logger.info(`Skip document ${docId} => is processing: ${action} ${queue} #${resourceId} time: ${processingTime} ms `)
     }
   }
 

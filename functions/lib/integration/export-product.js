@@ -4,7 +4,6 @@ const { logger } = require('./../../context')
 const errorHandling = require('../store-api/error-handling')
 const Bling = require('../bling-auth/client')
 const parseProduct = require('./parsers/product-to-bling')
-// const handleJob = require('./handle-job')
 const url = require('url')
 
 const getBlingStockId = (blingApi, blingProductId) => {

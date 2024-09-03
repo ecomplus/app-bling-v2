@@ -467,7 +467,7 @@ const app = {
               type: 'string'
             },
             bling_shipping: {
-              type: 'number',
+              type: 'string',
               title: 'Id da forma de envio correspondente no Bling'
             }
           }

@@ -1,4 +1,4 @@
-module.exports = (address, blingAddress, blingCityField = 'cidade') => {
+module.exports = (address, blingAddress, blingCityField = 'municipio') => {
   if (address) {
     ;[
       ['name', 'nome', 120],
