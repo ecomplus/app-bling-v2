@@ -14,7 +14,6 @@ const getLastStatus = records => {
 }
 
 module.exports = async ({ appSdk, storeId, auth }, _blingStore, _blingDeposit, queueEntry, appData) => {
-  console.log('init import order')
   const blingOrderNumber = queueEntry.nextId
   const {
     client_id: clientId,
@@ -25,12 +24,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, _blingDeposit, q
   const endpoint = `/pedidos/vendas?limite=1&numero=${blingOrderNumber}`
   const job = bling.get(endpoint)
     .then(({ data: { data } }) => {
-      console.log(`> test ${JSON.stringify(data)}`)
       const blingOrderId = data.length && data[0].id
-      if (!blingOrderId) {
-        // TODO:
-        // create error
-      }
       return bling.get(`/pedidos/vendas/${blingOrderId}`)
     })
     .then(async ({ data: { data } }) => {
@@ -47,7 +41,6 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, _blingDeposit, q
       const numero = blingOrder.numeroLoja && blingOrder.numeroLoja.length ? blingOrder.numeroLoja : blingOrder.numero
       const listEndpoint = '/orders.json?limit=1&fields=_id,payments_history,fulfillments,shipping_lines' +
       `&number=${numero}`
-      console.log(`endpoint list ${listEndpoint}`)
       return appSdk.apiRequest(storeId, listEndpoint, 'GET', null, auth)
         .then(({ response }) => {
           const { result } = response.data
@@ -56,7 +49,6 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, _blingDeposit, q
           }
           const order = result[0]
           return parseOrder(blingOrder, order.shipping_lines, bling, storeId).then(partialOrder => {
-            console.log('parse order')
             const promises = []
             if (partialOrder && Object.keys(partialOrder).length) {
               promises.push(appSdk
@@ -82,7 +74,6 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, _blingDeposit, q
                 promises.push(appSdk.apiRequest(storeId, endpoint, 'POST', data, auth))
               }
             })
-            console.log(`length ${promises.length}`)
             return Promise.all(promises).then(([firstResult]) => firstResult)
           })
         })

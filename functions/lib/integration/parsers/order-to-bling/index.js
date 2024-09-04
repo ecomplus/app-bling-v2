@@ -27,7 +27,6 @@ module.exports = (order, blingOrderNumber, blingStore, appData, customerIdBling,
     if (order.items && order.items.length) {
       blingOrder.itens = []
       order.items.forEach(item => {
-        // console.log(`itemsBling: ${JSON.stringify(itemsBling)}`)
         if (item.quantity) {
           const itemRef = (item.sku || item._id).substring(0, 40)
           const itemToBling = {

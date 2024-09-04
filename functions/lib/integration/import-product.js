@@ -85,8 +85,7 @@ const createUpdateProduct = async ({ appSdk, storeId, auth }, appData, sku, prod
     })
 }
 
-module.exports = async ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
-  // console.log('init import product')
+module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, queueEntry, appData, _, isHiddenQueue) => {
   const [sku, productId] = String(queueEntry.nextId).split(';:')
   const { client_id: clientId, client_secret: clientSecret } = appData
 

@@ -17,7 +17,6 @@ class Bling {
   async checkTime (url) {
     return new Promise(resolve => {
       const now = new Date()
-      // console.log(`last ${this.last_request?.toISOString()} now ${now.toISOString()} ${url}`)
       if (!this.last_request) {
         this.last_request = now
         resolve(true)

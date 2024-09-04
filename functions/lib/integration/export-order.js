@@ -79,11 +79,10 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
         .catch(err => {
           if (err.response && err.response.status === 404) {
             if (blingOrderId) {
-              const ed = `/pedidos/vendas?${params.toString()}`
-              console.log(`Try ${ed}`)
+              const newEndpoint = `/pedidos/vendas?${params.toString()}`
               hasCreatedBlingOrder = undefined
               blingOrderId = undefined
-              return bling.get(ed)
+              return bling.get(newEndpoint)
                 .catch(err => {
                   if (err.response && err.response.status === 404) {
                     logger.warn(`Order Bling not found ${endpoint}`)
@@ -98,7 +97,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
           throw err
         })
         .then(async ({ data: { data } }) => {
-          console.log('>start ', JSON.stringify(data))
           const blingStatus = parseStatus(order, appData)
           const hasFoundByNumber = Boolean(Array.isArray(data) && data.length)
           let originalBlingOrder
@@ -197,7 +195,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
 
         .then((response) => {
           const blingStatus = response?.blingStatus
-          // console.log(` have status ${blingOrderId}: ${JSON.stringify(blingStatus)}`)
           if (blingOrderId) {
             const getParseStatusBling = (situacoes) => {
               let blingStatusObj
@@ -231,8 +228,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
                       return getParseStatusBling([data])
                     })
                 }
-
-                // console.log(`=> status ${JSON.stringify(blingStatusCurrent)} => ${JSON.stringify(newStatusBling)}`)
 
                 if (!blingStatusCurrent || blingStatusCurrent.nome !== newStatusBling.nome) {
                   return bling.patch(`/pedidos/vendas/${blingOrderId}/situacoes/${newStatusBling.id}`)

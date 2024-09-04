@@ -135,8 +135,7 @@ const tryImageUpload = (storeId, auth, originImgUrl, product) => new Promise(res
         })
     })
 
-    .catch(err => {
-      console.error(err)
+    .catch(_err => {
       resolve({
         _id: ecomUtils.randomObjectId(),
         normal: {

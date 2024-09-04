@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const { functionName, operatorToken, nameCollectionEvents } = require('./__env')
-const { createExecContex } = require('./context')
+const { createExecContext } = require('./context')
 const handleEvents = require('./lib/events/handle-events')
 
 const path = require('path')
@@ -10,6 +10,7 @@ const recursiveReadDir = require('./lib/recursive-read-dir')
 // Firebase SDKs to setup cloud functions and access Firestore database
 const admin = require('firebase-admin')
 const functions = require('firebase-functions')
+// const { onRequest } = require('firebase-functions/v2/https')
 admin.initializeApp()
 
 // web server with Express
@@ -132,10 +133,10 @@ recursiveReadDir(routesDir).filter(filepath => filepath.endsWith('.js')).forEach
   }
 })
 
-// server.use(createContext)
 server.use(router)
 
-exports[functionName] = functions.https.onRequest(createExecContex(server))
+exports[functionName] = functions.https.onRequest(createExecContext(server))
+// exports[`${functionName}v2`] = onRequest({ memory: '512MiB' }, createExecContext(server))
 console.log(`-- Starting '${app.title}' E-Com Plus app with Function '${functionName}'`)
 
 // schedule update tokens job
@@ -149,10 +150,10 @@ console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
 exports.eventsEcomplus = functions.firestore
   .document(`${nameCollectionEvents}_ecomplus/{docId}`)
-  .onWrite(createExecContex(handleEvents))
+  .onWrite(createExecContext(handleEvents))
 console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 
 exports.eventsBling = functions.firestore
   .document(`${nameCollectionEvents}_bling/{docId}`)
-  .onWrite(createExecContex(handleEvents))
+  .onWrite(createExecContext(handleEvents))
 console.log('-- Starting events Bling with Function \'eventsBling\'')

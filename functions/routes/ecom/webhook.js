@@ -2,7 +2,7 @@
 const { logger } = require('./../../context')
 const getAppData = require('../../lib/store-api/get-app-data')
 const { Timestamp, getFirestore } = require('firebase-admin/firestore')
-const { baseUri, operatorToken, nameCollectionEvents } = require('./../../__env')
+const { nameCollectionEvents } = require('./../../__env')
 
 const integrationHandlers = {
   exportation: {
@@ -30,7 +30,7 @@ const removeFromQueue = (resourceId) => {
 exports.post = async ({ appSdk, admin }, req, res) => {
   // receiving notification from Store API
   const { storeId } = req
-
+  /* TODO:
   if (req.get('host') && !baseUri.includes(req.get('host'))) {
     logger.info('>>> Proxy to function v2')
     const axios = require('axios')
@@ -54,6 +54,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       logger.error(err)
     }
   }
+    // */
 
   /**
    * Treat E-Com Plus trigger body here
@@ -83,13 +84,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
 
             /* DO YOUR CUSTOM STUFF HERE */
             const blingClientId = appData.client_id
-            // const blingClientSecret = appData.client_secret
-            // const bling = await blingAxios(blingClientId, blingClientSecret, storeId)
             logger.info(`> Webhook #${storeId} ${resourceId} [${trigger.resource}]`)
 
-            // const blingClientSecret = appData.client_secret
-            // const blingStore = appData.bling_store
-            // const blingDeposit = appData.bling_deposit
             if (typeof blingClientId === 'string' && blingClientId) {
               let integrationConfig
               let canCreateNew = false
@@ -175,16 +171,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                             Object.assign(body, { canCreateNew })
                           }
                           return docRef.set(body, { merge: true })
-                          // eslint-disable-next-line promise/no-nesting
-                          // return handler(
-                          //   { appSdk, storeId, auth },
-                          //   blingStore,
-                          //   blingDeposit,
-                          //   queueEntry,
-                          //   appData,
-                          //   canCreateNew,
-                          //   isHiddenQueue
-                          // )
                             .then(() => ({ appData, queueEntry }))
                         }
                       }
@@ -201,9 +187,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       .then(({ appData, queueEntry }) => {
         removeFromQueue(resourceId)
         if (appData) {
-          const { action, queue /*, nextId, mustUpdateAppQueue */ } = queueEntry
-          // todo: remove id in appData
-
+          const { action, queue } = queueEntry
           if (appData[action] && Array.isArray(appData[action][queue])) {
             res.status(202)
           } else {

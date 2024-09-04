@@ -17,7 +17,7 @@ const getBlingStockId = (blingApi, blingProductId) => {
     if (depositos && depositos.length) {
       return depositos[0].id
     }
-  }).catch(console.error)
+  }).catch(logger.error)
 }
 
 module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntry, appData, canCreateNew) => {
@@ -69,7 +69,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
         })
 
         .then(async ({ data: { data: blingProducts } }) => {
-          console.log(`${blingProductId} p: ${JSON.stringify(blingProducts)}`)
           if (blingProducts && Array.isArray(blingProducts) && blingProducts.length) {
             originalBlingProduct = blingProducts.find(({ codigo }) => product.sku === String(codigo))
 
@@ -85,20 +84,13 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
               originalBlingProduct = blingProductId && await blingApi.get(`/produtos/${blingProductId}`)
                 .then(({ data: { data: productBling } }) => productBling)
             }
-            console.log(`original ${JSON.stringify(originalBlingProduct)}`)
             bodyBlingProduct = parseProduct(product, originalBlingProduct, blingProductCode, blingStore, appData)
             logger.info('>body ', JSON.stringify(bodyBlingProduct))
             if (bodyBlingProduct) {
               const endpoint = `/produtos${originalBlingProduct ? `/${blingProductId}` : ''}`
               if (originalBlingProduct) {
-                // TODO: remove debug
-                logger.info('>> Put Bling ', endpoint)
-
-                // TODO: it isn't updating stock. Why?
                 return blingApi.put(endpoint, bodyBlingProduct)
               }
-              // TODO: remove debug
-              logger.info('>> Post Bling')
               return blingApi.post(endpoint, bodyBlingProduct)
             }
           }
@@ -107,7 +99,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
 
         .then(async (response) => {
           const responseData = response?.data?.data
-          // console.log(`> create: ${JSON.stringify(responseData)}`)
           if (!metafields) {
             metafields = []
           }
@@ -145,10 +136,7 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
             ).catch(logger.error)
           }
 
-          // console.log(`original: ${JSON.stringify(originalBlingProduct)}`)
           const isVariations = Boolean(product.variations && product.variations.length)
-          // TODO: handle stock if exists variations
-
           const blingQuantity = originalBlingProduct?.quantity
           const productQuantity = !isVariations ? product?.quantity : 0
           const isUpdateStock = appData.export_quantity === true || Boolean(!originalBlingProduct)
@@ -174,7 +162,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
               const newVariation = newVariations.find(({ nomeVariacao }) => nomeVariacao === variationFind.variacao?.nome)
               const isUpdateStockVariation = appData.export_quantity === true || Boolean(newVariation)
 
-              // console.log(`${isUpdateStockVariation} ${appData.export_quantity} ${JSON.stringify(variationFind)}`)
               if (variationFind && isUpdateStockVariation) {
                 const bodyStock = {
                   produto: { id: Number((newVariation || variationFind).id) },
@@ -207,7 +194,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
           throw err
         })
 
-      // handleJob({ appSdk, storeId }, queueEntry, job)
       return job
     })
 
@@ -218,8 +204,6 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
           const msg = `O produto ${productId} não existe (:${status})`
           const err = new Error(msg)
           err.isConfigError = true
-          // handleJob({ appSdk, storeId }, queueEntry, Promise.reject(err))
-          // return err
         }
       }
       errorHandling(err)

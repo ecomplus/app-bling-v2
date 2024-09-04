@@ -1,11 +1,12 @@
 const url = require('url')
+const { logger } = require('../../context')
 
 module.exports = (clientId, clientSecret, code, storeId, refreshToken) => new Promise((resolve, reject) => {
   //  https://developer.bling.com.br/aplicativos#fluxo-de-autoriza%C3%A7%C3%A3o
   const axios = require('./create-axios')(undefined, clientId, clientSecret)
   const request = isRetry => {
     const path = '/oauth/token'
-    console.log(`>> Create Auth with ${refreshToken ? 'refresh_token' : 'code'}`)
+    logger.info(`>> Create Auth with ${refreshToken ? 'refresh_token' : 'code'}`)
     const grandType = {
       grant_type: refreshToken ? 'refresh_token' : 'authorization_code'
     }
@@ -18,8 +19,8 @@ module.exports = (clientId, clientSecret, code, storeId, refreshToken) => new Pr
     axios.post(path, params.toString())
       .then(({ data }) => resolve(data))
       .catch(err => {
-        console.error('> Deu erro s:', storeId, ' => ', JSON.stringify(err))
-        console.error('#', storeId, ' => ', err.response?.data && JSON.stringify(err.response.data))
+        logger.error(`> Deu erro s:${storeId} => ${JSON.stringify(err)}`)
+        logger.error(`# ${storeId} => ${err.response?.data && JSON.stringify(err.response.data)}`)
         if (!isRetry && err.response && err.response.status >= 429) {
           setTimeout(() => request(true), 7000)
         }

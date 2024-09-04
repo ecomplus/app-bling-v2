@@ -17,7 +17,6 @@ const integrationHandlers = {
 module.exports = async (change, context) => {
   const { docId } = context.params
   if (!change.after.exists) {
-    // console.log(`Document  #${docId} not exists`)
     return null
   }
 
@@ -37,7 +36,6 @@ module.exports = async (change, context) => {
     isHiddenQueue,
     processingAt
   } = data
-  // console.log(`${JSON.stringify(data)}`)
 
   if (storeId > 100) {
     logger.info(`Event ${eventBy} StoreId ${storeId}`)

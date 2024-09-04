@@ -8,11 +8,10 @@ const { logger } = require('../../context')
 
 const firestoreColl = 'bling_tokens'
 exports.get = async ({ appSdk, admin }, req, res) => {
-  console.log('>> GET  BLING')
   const { query } = req
   const { state, code } = query
   const storeId = parseInt(query.storeId, 10)
-  console.log('>> Store: ', storeId, ' code: ', code, 'aplicativo', state, '<<')
+  logger.info(`'>> Store: ${storeId} code: ${code} aplicativo ${state} <<'`)
   if (storeId > 100 && code) {
     return appSdk.getAuth(storeId)
       .then(async (auth) => {
@@ -20,7 +19,7 @@ exports.get = async ({ appSdk, admin }, req, res) => {
           getAppData({ appSdk, storeId, auth })
             .then(async (appData) => {
               const { client_id: clientId, client_secret: clientSecret } = appData
-              console.log('Pass variables', JSON.stringify({ clientId, clientSecret, code, storeId }))
+              logger.info(`Pass variables ${JSON.stringify({ clientId, clientSecret, code, storeId })}`)
               await blingAuth(clientId, clientSecret, code, storeId).then(async (data) => {
                 const now = Timestamp.now()
                 await getFirestore().doc(`${firestoreColl}/${storeId}`).set({
@@ -45,7 +44,6 @@ exports.get = async ({ appSdk, admin }, req, res) => {
               return res.status(200).redirect('https://app.e-com.plus/#/apps/edit/102418/')
             })
         } catch (error) {
-          console.error(error)
           const { response, config } = error
           let status
           if (response) {
@@ -54,7 +52,9 @@ exports.get = async ({ appSdk, admin }, req, res) => {
             err.url = config && config.url
             err.status = status
             err.response = JSON.stringify(response.data)
-            console.error(err)
+            logger.error(err)
+          } else {
+            logger.error(error)
           }
           if (!res.headersSent) {
             return res.sendStatus(400)
@@ -62,7 +62,6 @@ exports.get = async ({ appSdk, admin }, req, res) => {
         }
       })
       .catch(() => {
-        console.log('Unauthorized')
         if (!res.headersSent) {
           res.sendStatus(401)
         }
