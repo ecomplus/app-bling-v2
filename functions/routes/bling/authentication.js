@@ -10,7 +10,7 @@ const firestoreColl = 'bling_tokens'
 exports.get = async ({ appSdk, admin }, req, res) => {
   const { query } = req
   const { state, code } = query
-  const storeId = parseInt(query.storeId, 10)
+  const storeId = parseInt(query.store_id, 10)
   logger.info(`'>> Store: ${storeId} code: ${code} aplicativo ${state} <<'`)
   if (storeId > 100 && code) {
     return appSdk.getAuth(storeId)
