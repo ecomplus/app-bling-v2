@@ -2,7 +2,7 @@
 
 const { functionName, operatorToken, nameCollectionEvents } = require('./__env')
 const { createExecContext } = require('./context')
-const { addQueueEvents } = require('./lib/events/handle-events')
+const { addQueueEvents, handleQueueEvents } = require('./lib/events/handle-events')
 
 const path = require('path')
 const recursiveReadDir = require('./lib/recursive-read-dir')
@@ -157,3 +157,8 @@ exports.eventsBling = functions.firestore
   .document(`${nameCollectionEvents}_bling/{docId}`)
   .onWrite(createExecContext(addQueueEvents))
 console.log('-- Starting events Bling with Function \'eventsBling\'')
+
+exports.eventsBling = functions.firestore
+  .document('queue_controller/{storeId}')
+  .onWrite(createExecContext(handleQueueEvents))
+console.log('-- Starting handleQueueEvents')
