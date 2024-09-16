@@ -1,4 +1,5 @@
 // const { Timestamp, getFirestore  } = require('firebase-admin')
+const { nameCollectionEvents } = require('./../../__env')
 const admin = require('firebase-admin')
 const getAppData = require('../store-api/get-app-data')
 const { logger } = require('../../context')
@@ -113,7 +114,12 @@ const addQueueEvents = async (change, context) => {
   logger.info(`docId: ${docId}`)
   const doc = change.after
 
-  const { storeId } = doc.data()
+  const {
+    storeId,
+    eventBy
+  } = doc.data()
+
+  const documentId = `${nameCollectionEvents}_${eventBy}/${docId}`
   if (storeId > 100) {
     const docRefQueue = firestore()
       .doc(`queue_controller/${storeId}`)
@@ -122,13 +128,13 @@ const addQueueEvents = async (change, context) => {
       const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
       await docRefQueue.update({
         storeId,
-        queue: firestore.FieldValue[nameFunction](docId),
+        queue: firestore.FieldValue[nameFunction](documentId),
         updatedAt: new Date().toISOString()
       })
     } else {
       await docRefQueue.set({
         storeId,
-        queue: isAdd ? [docId] : [],
+        queue: isAdd ? [documentId] : [],
         updatedAt: new Date().toISOString()
       }, { merge: true })
     }
@@ -137,7 +143,7 @@ const addQueueEvents = async (change, context) => {
   return null
 }
 
-const handleQueueEvents = async (change, context) => {
+const controllerQueueEvents = async (change, context) => {
   const { docId } = context.params
   if (!change.after.exists) {
     return null
@@ -151,6 +157,7 @@ const handleQueueEvents = async (change, context) => {
     docRun,
     queue
   } = doc.data()
+
   if (storeId > 100) {
     const docId = queue && queue.length && queue[0]
     if (!docRun || docRun !== docId) {
@@ -178,5 +185,5 @@ const handleQueueEvents = async (change, context) => {
 
 module.exports = {
   addQueueEvents,
-  handleQueueEvents
+  controllerQueueEvents
 }
