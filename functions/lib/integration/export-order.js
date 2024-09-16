@@ -71,10 +71,10 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
       const params = new url.URLSearchParams(urlParams)
       const bling = new Bling(clientId, clientSecret, storeId)
       const endpoint = `/pedidos/vendas${hasCreatedBlingOrder ? `/${blingOrderId}` : `?${params.toString()}`}`
-      const [paymentTypeId, allStatusBling] = await Promise.all([
-        getPaymentBling(bling, transaction, appData.parse_payment),
-        getStatusBling(bling)
-      ])
+
+      const paymentTypeId = transaction ? await getPaymentBling(bling, transaction, appData.parse_payment) : null
+      const allStatusBling = await getStatusBling(bling)
+
       const job = bling.get(endpoint)
         .catch(err => {
           if (err.response && err.response.status === 404) {
