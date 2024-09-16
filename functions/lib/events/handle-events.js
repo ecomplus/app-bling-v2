@@ -14,6 +14,8 @@ const integrationHandlers = {
   }
 }
 
+const limiteTime = (2 * 60 * 1000)
+
 module.exports = async (change, context) => {
   const { docId } = context.params
   if (!change.after.exists) {
@@ -41,7 +43,7 @@ module.exports = async (change, context) => {
     logger.info(`Event ${eventBy} StoreId ${storeId}`)
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
-    const isProcessing = processingTime && processingTime < (2 * 60 * 1000)
+    const isProcessing = processingTime && processingTime < limiteTime
     // logger.info(`${isProcessing ? 'Processing' : ''} ${processingTime || 0}ms`)
     if (isProcessing) {
       logger.info(`Skip document ${docId} => is processing: ${action} ${queue} #${resourceId} time: ${processingTime} ms `)
@@ -78,11 +80,23 @@ module.exports = async (change, context) => {
 
             return log({ appSdk, storeId }, queueEntry, response)
           })
-            .catch(err => {
+            .catch(async (err) => {
+              const delay = (timeout) => new Promise(resolve => setTimeout(() => resolve(true), timeout || 60 * 1000))
               logger.error(err)
+              const now = Timestamp.now()
+              const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
+              const isProcessing = processingTime && processingTime < limiteTime
+              const attempts = (data.attempts || 0) + 1
+              if (attempts < 3) {
+                // update to retry
+                await delay(isProcessing ? (limiteTime - processingTime) : 10)
+                doc.ref.set({ attempts }, { merge: true })
+              }
+
               if (!queueEntry.isNotQueued) {
                 return log({ appSdk, storeId }, queueEntry, err)
               }
+              return null
             })
         }
       }
