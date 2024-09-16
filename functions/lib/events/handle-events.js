@@ -128,8 +128,8 @@ const addQueueEvents = async (change, context) => {
     const docRefQueue = firestore()
       .doc(`queue_controller/${storeId}`)
 
+    const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
     if (docRefQueue) {
-      const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
       await docRefQueue.set({
         storeId,
         queue: firestore.FieldValue[nameFunction](documentId),
@@ -138,7 +138,7 @@ const addQueueEvents = async (change, context) => {
     } else {
       await docRefQueue.set({
         storeId,
-        queue: isAdd ? [documentId] : [],
+        queue: firestore.FieldValue[nameFunction](documentId),
         updatedAt: new Date().toISOString()
       }, { merge: true })
     }
