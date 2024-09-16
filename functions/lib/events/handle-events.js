@@ -84,7 +84,7 @@ const runDoc = async (docId, doc) => {
           const attempts = (data.attempts || 0) + 1
           await doc.ref.delete()
           if (attempts < 3) {
-            await firestore.doc(docId).set({
+            await firestore().doc(docId).set({
               ...data,
               createdAt: now
             })
@@ -125,7 +125,7 @@ const addQueueEvents = async (change, context) => {
     if (storeId === 1024) {
       return null
     }
-    const docRefQueue = await firestore()
+    const docRefQueue = firestore()
       .doc(`queue_controller/${storeId}`)
 
     if (docRefQueue) {
