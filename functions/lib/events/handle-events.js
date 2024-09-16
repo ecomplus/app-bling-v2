@@ -190,7 +190,7 @@ const controllerQueueEvents = async (change, context) => {
 
       await runDoc(docId, docQueue)
         .then(() => {
-          docQueue.ref.update({
+          doc.ref.update({
             runDocId: firestore.FieldValue.delete()
           })
         })
