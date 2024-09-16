@@ -154,7 +154,7 @@ const controllerQueueEvents = async (change, context) => {
 
   const {
     storeId,
-    docRun,
+    runDocId,
     queue,
     processingAt
   } = doc.data()
@@ -164,7 +164,7 @@ const controllerQueueEvents = async (change, context) => {
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limiteTime
-    if (!docRun || (docRun !== documentId && !isProcessing)) {
+    if (!runDocId || (runDocId !== documentId && !isProcessing)) {
       // ler o documento
     // adiciona no docRun e
     // processing
@@ -172,14 +172,14 @@ const controllerQueueEvents = async (change, context) => {
     // quando finalizar remove o docRun
       const docQueue = await firestore().doc(docId).get()
       await docQueue.ref.update({
-        docRun: docId,
+        runDocId: documentId,
         processingAt: now
       })
 
       await runDoc(docId, docQueue)
         .then(() => {
           docQueue.ref.update({
-            docRun: firestore.FieldValue.delete()
+            runDocId: firestore.FieldValue.delete()
           })
         })
     }
