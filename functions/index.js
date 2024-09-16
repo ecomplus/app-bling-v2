@@ -150,10 +150,10 @@ console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
 exports.eventsEcomplus = functions.firestore
   .document(`${nameCollectionEvents}_ecomplus/{docId}`)
-  .onWrite(createExecContext(handleEvents))
+  .onWrite(createExecContext(handleEvents.addQueueEvents))
 console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 
 exports.eventsBling = functions.firestore
   .document(`${nameCollectionEvents}_bling/{docId}`)
-  .onWrite(createExecContext(handleEvents))
+  .onWrite(createExecContext(handleEvents.addQueueEvents))
 console.log('-- Starting events Bling with Function \'eventsBling\'')

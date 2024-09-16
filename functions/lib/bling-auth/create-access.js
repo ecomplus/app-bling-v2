@@ -28,7 +28,7 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
     const timeLimitBloqued = Timestamp.fromMillis(updatedAt.toMillis() + (24 * 60 * 60 * 1000))
 
     if (isBloqued) {
-      throw Error('Bling refreshToken is invalid need to update')
+      throw new Error('Bling refreshToken is invalid need to update')
     }
 
     if (isRateLimit) {
@@ -38,9 +38,9 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
         updatedAt: now
       }, { merge: true }).catch(logger.error)
 
-      throw Error('Bling daily rate limit reached, please try again later')
+      throw new Error('Bling daily rate limit reached, please try again later')
     } else if (isRateLimitDoc && now.toMillis() < timeLimitBloqued.toMillis()) {
-      throw Error('Bling daily rate limit reached, please try again later')
+      throw new Error('Bling daily rate limit reached, please try again later')
     } else if (isRateLimitDoc && now.toMillis() >= timeLimitBloqued.toMillis()) {
       // disable daily rate limit
       await docRef.set({
@@ -80,7 +80,7 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
       }
     }
   } else {
-    throw Error('No Bling token document')
+    throw new Error('No Bling token document')
   }
 
   return createAxios(accessToken)

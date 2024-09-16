@@ -16,7 +16,7 @@ const integrationHandlers = {
 
 const limiteTime = (2 * 60 * 1000)
 
-module.exports = async (change, context) => {
+const addQueueEvents = async (change, context) => {
   const { docId } = context.params
   if (!change.after.exists) {
     return null
@@ -104,4 +104,9 @@ module.exports = async (change, context) => {
   }
 
   return null
+}
+
+module.exports = {
+  addQueueEvents
+  // runDoc
 }
