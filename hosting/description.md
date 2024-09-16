@@ -2,9 +2,13 @@
 
 Aplicativo ainda em versão Beta
 
-## Observações
+### Observações
 
-Na versão Beta será necessário seguir alguns procedimentos no painel do Bling conforme a referência, [clique aqui](https://developer.bling.com.br/aplicativos#introdu%C3%A7%C3%A3o).
+Na versão Beta será necessário seguir alguns procedimentos no painel do Bling conforme a referência, 
+<a href="https://developer.bling.com.br/aplicativos#introdu%C3%A7%C3%A3o" target="_blank">clique aqui</a>
+.
+
+## 1) Criar aplicativo no dashbord do Bling
 
 **ATENÇÃO**:  Antes de acionar o link do convite do aplicativo criado no Bling é necessário adicionar  e salvar os `client_id` e `client_secret` aqui nas configurações desse aplicativo.
 
@@ -33,13 +37,13 @@ Lista de escopos necessários a ser habilitados no painel do Bling
 1) **Produtos**: Salvar imagens dos Produtos
 1) **Produtos**: Salvar variações de Produtos
 
-## Link de redirecionamento
+### Link de redirecionamento
 
 ```https://us-central1-ecom-bling-v2.cloudfunctions.net/app/bling/authentication?store_id=SEU_STORE_ID_AQUI```
 
-### Habilitar Callback (webhook) do Bling
+## 2) Habilitar Callback (webhook) do Bling
 
-Para habilitar os callbacks do bling é necessário adicionar um aplicativo no painel do Bling através do seu Marketplace de aplicativos, [veja aqui como adicionar](
-https://ajuda.bling.com.br/hc/pt-br/articles/360047064713-Callback-de-altera%C3%A7%C3%A3o-de-situa%C3%A7%C3%A3o).
+Para habilitar os callbacks do bling é necessário adicionar um aplicativo no painel do Bling através do seu Marketplace de aplicativos,
+<a href="https://ajuda.bling.com.br/hc/pt-br/articles/360047064713-Callback-de-altera%C3%A7%C3%A3o-de-situa%C3%A7%C3%A3o" target="_blank">veja aqui como adicionar</a>.
 
 **URL para os callbacks:** ```https://us-central1-ecom-bling-v2.cloudfunctions.net/app/bling/calback?store_id=SEU_STORE_ID_AQUI```
