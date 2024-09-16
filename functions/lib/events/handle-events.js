@@ -97,7 +97,7 @@ const runDoc = async (docId, doc) => {
           if (!queueEntry.isNotQueued) {
             return log({ appSdk, storeId }, queueEntry, err)
           }
-          throw err
+          // throw err
         })
     }
   }
@@ -121,16 +121,16 @@ const addQueueEvents = async (change, context) => {
 
   const documentId = `${nameCollectionEvents}_${eventBy}/${docId}`
   if (storeId > 100) {
-    const docRefQueue = firestore()
+    const docRefQueue = await firestore()
       .doc(`queue_controller/${storeId}`)
 
     if (docRefQueue) {
       const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
-      await docRefQueue.update({
+      await docRefQueue.set({
         storeId,
         queue: firestore.FieldValue[nameFunction](documentId),
         updatedAt: new Date().toISOString()
-      })
+      }, { merge: true })
     } else {
       await docRefQueue.set({
         storeId,
