@@ -2,7 +2,7 @@
 
 const { functionName, operatorToken, nameCollectionEvents } = require('./__env')
 const { createExecContext } = require('./context')
-const handleEvents = require('./lib/events/handle-events')
+const { addQueueEvents } = require('./lib/events/handle-events')
 
 const path = require('path')
 const recursiveReadDir = require('./lib/recursive-read-dir')
@@ -150,10 +150,10 @@ console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
 exports.eventsEcomplus = functions.firestore
   .document(`${nameCollectionEvents}_ecomplus/{docId}`)
-  .onWrite(createExecContext(handleEvents.addQueueEvents))
+  .onWrite(createExecContext(addQueueEvents))
 console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 
 exports.eventsBling = functions.firestore
   .document(`${nameCollectionEvents}_bling/{docId}`)
-  .onWrite(createExecContext(handleEvents.addQueueEvents))
+  .onWrite(createExecContext(addQueueEvents))
 console.log('-- Starting events Bling with Function \'eventsBling\'')
