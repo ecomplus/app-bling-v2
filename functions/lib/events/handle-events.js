@@ -106,43 +106,46 @@ const runDoc = async (docId, doc) => {
 
 const addQueueEvents = async (change, context) => {
   const { docId } = context.params
+  const collectionPath = context.resource.name
+  const collectionName = collectionPath.split('/')[5]
   const isAdd = change.after.exists
   // if (!change.after.exists) {
   //   return null
   // }
+  const documentId = `${collectionName}/${docId}`
+  logger.info(`docId: ${docId} ${collectionPath} ${documentId}`)
+  // const doc = change.after
+  // const docBefore = change.before
+  const storeId = change[`${isAdd ? 'after' : 'before'}`]?.data()?.storeId
+  logger.info(`storeID: ${storeId}`)
+  // const {
+  //   storeId,
+  //   eventBy
+  // } = doc.data()
 
-  logger.info(`docId: ${docId}`)
-  const doc = change.after
+  // const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
+  // if (storeId > 100) {
+  //   // TODO:
+  //   if (storeId === 1024) {
+  //     return null
+  //   }
+  //   const docRefQueue = firestore()
+  //     .doc(`queue_controller/${storeId}`)
 
-  const {
-    storeId,
-    eventBy
-  } = doc.data()
-
-  const documentId = `${nameCollectionEvents}_${eventBy}/${docId}`
-  if (storeId > 100) {
-    // TODO:
-    if (storeId === 1024) {
-      return null
-    }
-    const docRefQueue = firestore()
-      .doc(`queue_controller/${storeId}`)
-
-    const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
-    if (docRefQueue) {
-      await docRefQueue.set({
-        storeId,
-        queue: firestore.FieldValue[nameFunction](documentId),
-        updatedAt: new Date().toISOString()
-      }, { merge: true })
-    } else {
-      await docRefQueue.set({
-        storeId,
-        queue: firestore.FieldValue[nameFunction](documentId),
-        updatedAt: new Date().toISOString()
-      }, { merge: true })
-    }
-  }
+  //   if (docRefQueue) {
+  //     await docRefQueue.set({
+  //       storeId,
+  //       queue: firestore.FieldValue[nameFunction](documentId),
+  //       updatedAt: new Date().toISOString()
+  //     }, { merge: true })
+  //   } else {
+  //     await docRefQueue.set({
+  //       storeId,
+  //       queue: firestore.FieldValue[nameFunction](documentId),
+  //       updatedAt: new Date().toISOString()
+  //     }, { merge: true })
+  //   }
+  // }
 
   return null
 }
