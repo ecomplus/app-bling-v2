@@ -30,5 +30,6 @@ module.exports = {
     `https://us-central1-${process.env.GCLOUD_PROJECT}.cloudfunctions.net/${functionName}`,
   pkg: {
     ...pkg
-  }
+  },
+  nameCollectionEvents: 'events'
 }
