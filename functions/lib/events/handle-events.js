@@ -170,7 +170,7 @@ const controllerQueueEvents = async (change, context) => {
     // processing
     // e executo
     // quando finalizar remove o docRun
-      const docQueue = await firestore().doc(docId).get()
+      const docQueue = await firestore().doc(documentId).get()
       await docQueue.ref.update({
         runDocId: documentId,
         processingAt: now
