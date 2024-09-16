@@ -158,7 +158,7 @@ exports.eventsBling = functions.firestore
   .onWrite(createExecContext(addQueueEvents))
 console.log('-- Starting events Bling with Function \'eventsBling\'')
 
-exports.eventsBling = functions.firestore
+exports.handleQueueEvents = functions.firestore
   .document('queue_controller/{storeId}')
   .onWrite(createExecContext(handleQueueEvents))
 console.log('-- Starting handleQueueEvents')
