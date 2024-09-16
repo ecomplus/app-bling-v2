@@ -121,6 +121,10 @@ const addQueueEvents = async (change, context) => {
 
   const documentId = `${nameCollectionEvents}_${eventBy}/${docId}`
   if (storeId > 100) {
+    // TODO:
+    if (storeId === 1024) {
+      return null
+    }
     const docRefQueue = await firestore()
       .doc(`queue_controller/${storeId}`)
 
@@ -160,6 +164,10 @@ const controllerQueueEvents = async (change, context) => {
   } = doc.data()
 
   if (storeId > 100) {
+    // TODO:
+    if (storeId === 1024) {
+      return null
+    }
     const documentId = queue && queue.length && queue[0]
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
