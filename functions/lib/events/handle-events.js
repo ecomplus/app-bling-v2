@@ -19,7 +19,7 @@ const integrationHandlers = {
   }
 }
 
-// const limiteTime = (2 * 60 * 1000)
+const limiteTime = (2 * 60 * 1000)
 
 const runDoc = async (docId, doc) => {
   const data = doc.data()
@@ -155,12 +155,16 @@ const controllerQueueEvents = async (change, context) => {
   const {
     storeId,
     docRun,
-    queue
+    queue,
+    processingAt
   } = doc.data()
 
   if (storeId > 100) {
-    const docId = queue && queue.length && queue[0]
-    if (!docRun || docRun !== docId) {
+    const documentId = queue && queue.length && queue[0]
+    const now = Timestamp.now()
+    const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
+    const isProcessing = processingTime && processingTime < limiteTime
+    if (!docRun || (docRun !== documentId && !isProcessing)) {
       // ler o documento
     // adiciona no docRun e
     // processing
@@ -168,7 +172,8 @@ const controllerQueueEvents = async (change, context) => {
     // quando finalizar remove o docRun
       const docQueue = await firestore().doc(docId).get()
       await docQueue.ref.update({
-        docRun: docId
+        docRun: docId,
+        processingAt: now
       })
 
       await runDoc(docId, docQueue)
