@@ -1,5 +1,3 @@
-// const { Timestamp, getFirestore  } = require('firebase-admin')
-const { nameCollectionEvents } = require('./../../__env')
 const admin = require('firebase-admin')
 const getAppData = require('../store-api/get-app-data')
 const { logger } = require('../../context')
@@ -113,39 +111,32 @@ const addQueueEvents = async (change, context) => {
   //   return null
   // }
   const documentId = `${collectionName}/${docId}`
-  logger.info(`docId: ${docId} ${collectionPath} ${documentId}`)
-  // const doc = change.after
-  // const docBefore = change.before
+  logger.info(`docId: ${documentId}`)
   const storeId = change[`${isAdd ? 'after' : 'before'}`]?.data()?.storeId
-  logger.info(`storeID: ${storeId}`)
-  // const {
-  //   storeId,
-  //   eventBy
-  // } = doc.data()
 
-  // const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
-  // if (storeId > 100) {
-  //   // TODO:
-  //   if (storeId === 1024) {
-  //     return null
-  //   }
-  //   const docRefQueue = firestore()
-  //     .doc(`queue_controller/${storeId}`)
+  const nameFunction = isAdd ? 'arrayUnion' : 'arrayRemove'
+  if (storeId > 100) {
+    // TODO:
+    if (storeId === 1024) {
+      return null
+    }
+    const docRefQueue = firestore()
+      .doc(`queue_controller/${storeId}`)
 
-  //   if (docRefQueue) {
-  //     await docRefQueue.set({
-  //       storeId,
-  //       queue: firestore.FieldValue[nameFunction](documentId),
-  //       updatedAt: new Date().toISOString()
-  //     }, { merge: true })
-  //   } else {
-  //     await docRefQueue.set({
-  //       storeId,
-  //       queue: firestore.FieldValue[nameFunction](documentId),
-  //       updatedAt: new Date().toISOString()
-  //     }, { merge: true })
-  //   }
-  // }
+    if (docRefQueue) {
+      await docRefQueue.set({
+        storeId,
+        queue: firestore.FieldValue[nameFunction](documentId),
+        updatedAt: new Date().toISOString()
+      }, { merge: true })
+    } else {
+      await docRefQueue.set({
+        storeId,
+        queue: firestore.FieldValue[nameFunction](documentId),
+        updatedAt: new Date().toISOString()
+      }, { merge: true })
+    }
+  }
 
   return null
 }
