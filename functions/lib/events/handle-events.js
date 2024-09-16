@@ -172,7 +172,7 @@ const controllerQueueEvents = async (change, context) => {
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limiteTime
-    if (!runDocId || (runDocId !== documentId && !isProcessing)) {
+    if (!runDocId || (runDocId === documentId && !isProcessing)) {
       // ler o documento
     // adiciona no docRun e
     // processing
