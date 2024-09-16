@@ -111,8 +111,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                       }
                       canCreateNew = true
                     } else if (
-                      (!trigger.body.price || !appData.export_price) &&
-                      (!trigger.body.quantity || !appData.export_quantity)
+                      (!trigger.body?.price || !appData.export_price) &&
+                      (!trigger.body?.quantity || !appData.export_quantity)
                     ) {
                       break
                     }
