@@ -200,7 +200,7 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
 }
 
 const deleteCollection = async () => {
-  const collections = ['queue_controller', 'events_ecomplus', 'events_bling']
+  const collections = ['queue', 'events_bling']
   collections.forEach((collectionName) => {
     admin.firestore()
       .collection(collectionName)
