@@ -44,4 +44,7 @@ Lista de escopos necessários a ser habilitados no painel do Bling
 Para habilitar os callbacks do bling é necessário adicionar um aplicativo no painel do Bling através do seu Marketplace de aplicativos,
 <a href="https://ajuda.bling.com.br/hc/pt-br/articles/360047064713-Callback-de-altera%C3%A7%C3%A3o-de-situa%C3%A7%C3%A3o" target="_blank">veja aqui como adicionar</a>.
 
-**URL para os callbacks:** ```https://us-central1-ecom-bling-v2.cloudfunctions.net/app/bling/callback?store_id=SEU_STORE_ID_AQUI```
+
+* **Tipo de retorno no callback** : _JSON (urlencoded)_
+
+* **URL para os callbacks:** ```https://us-central1-ecom-bling-v2.cloudfunctions.net/app/bling/callback?store_id=SEU_STORE_ID_AQUI```

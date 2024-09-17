@@ -155,8 +155,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                           const debugFlag = `#${storeId} ${action}/${queue}/${nextId}`
                           const now = Timestamp.now()
                           const docRef = getFirestore()
-                          // .doc(`queue/${storeId}/${nameCollectionEvents}/order_${numero}`)
-                          // .doc(`${nameCollectionEvents}_ecomplus/${storeId}_${nextId}`)
                             .doc(`queue/${storeId}/${nameCollectionEvents}/ecomplus_${nextId}`)
                           logger.info(`> Send ${debugFlag}`)
                           const queueEntry = { action, queue, nextId, mustUpdateAppQueue }
