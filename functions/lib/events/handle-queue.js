@@ -8,6 +8,9 @@ const Timestamp = admin.firestore.Timestamp
 const addEventsQueue = async (change, context) => {
   const strStoreId = context.params.storeId
   // const docId = context.params.docId
+  if (strStoreId === '1024' || strStoreId === '51372') {
+    return null
+  }
 
   const docRefQueue = await admin.firestore().doc(`queue/${strStoreId}`).get()
 
