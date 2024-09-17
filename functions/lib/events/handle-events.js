@@ -38,7 +38,6 @@ const handleEvents = async (
       canCreateNew,
       mustUpdateAppQueue,
       isHiddenQueue
-      // processingAt
     } = data
 
     const appSdk = await getAppSdk()
@@ -71,10 +70,10 @@ const handleEvents = async (
           return log({ appSdk, storeId }, queueEntry, response)
         })
           .catch(async (err) => {
-            logger.warn('Catch error')
             logger.error(err)
             if (err.response?.status === 503) {
               setTimeout(() => {
+                // send to the end of the queue
                 logger.warn(`> Error 503: ${documentId}`)
                 return docRef.ref
                   .update({

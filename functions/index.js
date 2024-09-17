@@ -156,8 +156,3 @@ console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 const handleEvents = require('./lib/events/handle-events')
 exports.onHandleEvents = require('./lib/events/utils')
   .createEventsFunction('webhooks', createExecContext(handleEvents))
-
-const { deleteCollection } = require('./lib/events/utils')
-const queueCreateProduct = 'every 1 mins'
-exports.onUpdateProduct = functions.pubsub.schedule(queueCreateProduct).onRun(deleteCollection)
-console.log(`-- Sheduled active access from '${queueCreateProduct}'`)

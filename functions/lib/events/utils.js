@@ -199,17 +199,6 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
     .catch(logger.error)
 }
 
-const deleteCollection = async () => {
-  admin.firestore()
-    .doc('queue/1131/events/ecomplus_66e4742d9e4b2e07f50a9bb8')
-    .get()
-    .then(doc => {
-      if (doc.exists) {
-        doc.ref.delete()
-      }
-    })
-}
-
 const getPubSubTopic = (eventName) => {
   return `${eventName}_events`
 }
@@ -259,13 +248,12 @@ const sendMessageTopic = async (eventName, json) => {
 
   logger.info(`>> MessageId: ${messageId} Topic: ${topicName}`)
 
-  return Promise.resolve(200)
+  return Promise.resolve(messageId)
 }
 
 module.exports = {
   getAppSdk,
   log,
-  deleteCollection,
   getPubSubTopic,
   createEventsFunction,
   sendMessageTopic

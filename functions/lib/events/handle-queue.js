@@ -8,9 +8,9 @@ const Timestamp = admin.firestore.Timestamp
 
 const addEventsQueue = async (change, context) => {
   const strStoreId = context.params.storeId
-  if (strStoreId !== '1131') {
-    return null
-  }
+  // if (strStoreId !== '1131') {
+  //   return null
+  // }
 
   const docRefQueue = await admin.firestore().doc(`queue/${strStoreId}`).get()
 
@@ -36,10 +36,18 @@ const addEventsQueue = async (change, context) => {
     const isProcessing = processingTime && processingTime < limitTimeProcessing
     if (!processingAt) {
       await sendMessageTopic('webhooks', { documentId, storeId })
-        .then(() => {
+        .then(async (messageId) => {
           logger.info(`> Start ${docOldestEvent.id} => ${documentId}`)
-          return docOldestEvent.ref.set({
-            processingAt: Timestamp.now()
+          await docOldestEvent.ref.set({
+            processingAt: Timestamp.now(),
+            eventId: messageId
+          }, { merge: true })
+        })
+        .catch(async (err) => {
+          logger.error(err)
+
+          await docOldestEvent.ref.set({
+            flag: 'Error'
           }, { merge: true })
         })
 
@@ -48,7 +56,8 @@ const addEventsQueue = async (change, context) => {
       }, { merge: true })
     } else if (!isProcessing) {
       const attempts = (oldestEvent.attempts || 0) + 1
-      if (attempts <= 3) {
+      if (attempts <= 4) {
+        // send to the end of the queue
         await docOldestEvent.ref
           .update({
             processingAt: admin.firestore.FieldValue.delete(),
