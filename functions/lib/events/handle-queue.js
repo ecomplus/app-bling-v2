@@ -48,15 +48,15 @@ const addEventsQueue = async (change, context) => {
       }, { merge: true })
     } else if (!isProcessing) {
       const attempts = (oldestEvent.attempts || 0) + 1
-      delete oldestEvent.processingAt
-      await docOldestEvent.ref.delete()
       if (attempts <= 3) {
-        await admin.firestore().doc(`${documentId}`)
-          .set({
-            ...oldestEvent,
+        await docOldestEvent.ref
+          .update({
+            processingAt: admin.firestore.FieldValue.delete(),
             createadAt: Timestamp.now(),
             attempts
           })
+      } else {
+        await docOldestEvent.ref.delete()
       }
     }
   }
