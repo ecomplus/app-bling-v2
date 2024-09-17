@@ -71,7 +71,8 @@ const handleEvents = async (
         })
           .catch(async (err) => {
             logger.error(err)
-            if (err.name === 'Bling refreshToken is invalid need to update') {
+            console.log(`${err.name} => ${err.message}`)
+            if (err.message === 'Bling refreshToken is invalid need to update') {
               logger.warn(`> delete: ${documentId}`)
               return docRef.ref
                 .delete()
