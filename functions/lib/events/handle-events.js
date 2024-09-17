@@ -118,11 +118,17 @@ const addEventsQueue = async (change, context) => {
       .doc(`queue_controller/${storeId}`)
 
     if (docRefQueue) {
-      await docRefQueue.set({
+      const body = {
         storeId,
         queue: firestore.FieldValue[nameFunction](documentId),
         updatedAt: new Date().toISOString()
-      }, { merge: true })
+      }
+      const runDocId = (await docRefQueue.get())?.data().runDocId
+      if (runDocId && runDocId === documentId && !isAdd) {
+        console.log('delete field')
+        body.runDocId = firestore.FieldValue.delete()
+      }
+      await docRefQueue.set(body, { merge: true })
     } else {
       await docRefQueue.set({
         storeId,
