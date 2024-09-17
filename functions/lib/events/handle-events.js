@@ -71,6 +71,12 @@ const handleEvents = async (
         })
           .catch(async (err) => {
             logger.error(err)
+            if (err.name === 'Bling refreshToken is invalid need to update') {
+              logger.warn(`> delete: ${documentId}`)
+              return docRef.ref
+                .delete()
+            }
+
             if (err.response?.status === 503) {
               setTimeout(() => {
                 // send to the end of the queue
