@@ -148,21 +148,6 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
 })
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
-// exports.eventsEcomplus = functions.firestore
-//   .document(`${nameCollectionEvents}_ecomplus/{docId}`)
-//   .onWrite(createExecContext(addEventsQueue))
-// console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
-
-// exports.eventsBling = functions.firestore
-//   .document(`${nameCollectionEvents}_bling/{docId}`)
-//   .onWrite(createExecContext(addEventsQueue))
-// console.log('-- Starting events Bling with Function \'eventsBling\'')
-
-// exports.handleQueueEvents = functions.firestore
-//   .document('queue_controller/{docId}')
-//   .onWrite(createExecContext(eventQueueController))
-// console.log('-- Starting handleQueueEvents')
-
 exports.queueEvents = functions.firestore
   .document(`queue/{storeId}/${nameCollectionEvents}/{docId}`)
   .onWrite(createExecContext(addEventsQueue))
@@ -171,3 +156,8 @@ console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 const handleEvents = require('./lib/events/handle-events')
 exports.onHandleEvents = require('./lib/events/utils')
   .createEventsFunction('webhooks', createExecContext(handleEvents))
+
+const { deleteCollection } = require('./lib/events/utils')
+const queueCreateProduct = 'every 1 mins'
+exports.onUpdateProduct = functions.pubsub.schedule(queueCreateProduct).onRun(deleteCollection('undefined_ecomplus'))
+console.log(`-- Sheduled active access from '${queueCreateProduct}'`)
