@@ -142,56 +142,56 @@ const addEventsQueue = async (change, context) => {
 }
 
 const eventQueueController = async (change, context) => {
-  const { docId } = context.params
-  if (!change.after.exists) {
-    return null
-  }
+  // const { docId } = context.params
+  // if (!change.after.exists) {
+  //   return null
+  // }
 
-  logger.info(`docId: ${docId}`)
-  const docController = change.after
+  // logger.info(`docId: ${docId}`)
+  // const docController = change.after
 
-  const {
-    storeId,
-    runDocId,
-    queue,
-    processingAt
-  } = docController.data()
+  // const {
+  //   storeId,
+  //   runDocId,
+  //   queue,
+  //   processingAt
+  // } = docController.data()
 
-  if (storeId > 100) {
-    // TODO:
-    if (storeId === 1024) {
-      return null
-    }
-    const documentId = queue && queue.length && queue[0]
-    const now = Timestamp.now()
-    const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
-    const isProcessing = processingTime && processingTime < limiteTime
-    logger.info(`${runDocId} => ${documentId} ${isProcessing}`)
-    if ((!runDocId && documentId) || (runDocId === documentId && !isProcessing)) {
-      // ler o documento
-    // adiciona no docRun e
-    // processing
-    // e executo
-    // quando finalizar remove o docRun
-      const docQueue = await firestore().doc(documentId).get()
-      if (docQueue.exists) {
-        console.log(docQueue.data())
-      }
+  // if (storeId > 100) {
+  //   // TODO:
+  //   if (storeId === 1024) {
+  //     return null
+  //   }
+  //   const documentId = queue && queue.length && queue[0]
+  //   const now = Timestamp.now()
+  //   const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
+  //   const isProcessing = processingTime && processingTime < limiteTime
+  //   logger.info(`${runDocId} => ${documentId} ${isProcessing}`)
+  //   if ((!runDocId && documentId) || (runDocId === documentId && !isProcessing)) {
+  //     // ler o documento
+  //   // adiciona no docRun e
+  //   // processing
+  //   // e executo
+  //   // quando finalizar remove o docRun
+  //     const docQueue = await firestore().doc(documentId).get()
+  //     if (docQueue.exists) {
+  //       console.log(docQueue.data())
+  //     }
 
-      await docController.ref.update({
-        runDocId: documentId,
-        processingAt: now
-      })
+  //     await docController.ref.update({
+  //       runDocId: documentId,
+  //       processingAt: now
+  //     })
 
-      await runDoc(documentId, docQueue)
-        .then(async () => {
-          await docController.ref.update({
-            runDocId: firestore.FieldValue.delete()
-          })
-          logger.info(`> finish ${documentId}`)
-        })
-    }
-  }
+  //     await runDoc(documentId, docQueue)
+  //       .then(async () => {
+  //         await docController.ref.update({
+  //           runDocId: firestore.FieldValue.delete()
+  //         })
+  //         logger.info(`> finish ${documentId}`)
+  //       })
+  //   }
+  // }
 
   return null
 }
