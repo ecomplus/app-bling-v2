@@ -1,7 +1,6 @@
 const ecomUtils = require('@ecomplus/utils')
 const axios = require('axios')
 const FormData = require('form-data')
-const { logger } = require('../../../context')
 
 const removeAccents = str => str.replace(/áàãâÁÀÃÂ/g, 'a')
   .replace(/éêÉÊ/g, 'e')
@@ -293,7 +292,6 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
             if (specTexts.length) {
               const { midia, codigo, preco, gtin, gtinEmbalagem, dimensoes, pesoBruto, pesoLiq, tributacao, id } = variacao
               let pictureId = 0
-              logger.warn(`${JSON.stringify(midia)}`)
               if (midia && midia.imagens && Array.isArray(midia.imagens.externas) && midia.imagens.externas.length) {
                 midia.imagens?.externas.forEach(({ link }) => updateExternas({ link }))
                 pictureId = midia.imagens.externas.length - 1

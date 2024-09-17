@@ -220,7 +220,7 @@ const createPubSubFunction = (
             .get()
             .then(async (docRef) => {
               if (docRef.exists) {
-                logger.warn(`delete docummet ${documentId}`)
+                logger.warn(`Delete document ${documentId}`)
                 await docRef.ref.delete()
               }
             })
