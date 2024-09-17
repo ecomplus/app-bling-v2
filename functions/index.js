@@ -159,5 +159,5 @@ exports.onHandleEvents = require('./lib/events/utils')
 
 const { deleteCollection } = require('./lib/events/utils')
 const queueCreateProduct = 'every 1 mins'
-exports.onUpdateProduct = functions.pubsub.schedule(queueCreateProduct).onRun(deleteCollection('undefined_ecomplus'))
+exports.onUpdateProduct = functions.pubsub.schedule(queueCreateProduct).onRun(deleteCollection)
 console.log(`-- Sheduled active access from '${queueCreateProduct}'`)

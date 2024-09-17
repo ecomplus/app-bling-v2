@@ -199,14 +199,19 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
     .catch(logger.error)
 }
 
-const deleteCollection = async (collectionName) => {
-  const collection = await admin.firestore()
-    .collection(collectionName)
-    .get()
-
-  collection.forEach(doc => {
-    doc.ref.delete()
-      .catch(logger.error)
+const deleteCollection = async () => {
+  const collections = ['queue_controller', 'events_ecomplus', 'events_bling']
+  collections.forEach((collectionName) => {
+    admin.firestore()
+      .collection(collectionName)
+      .get()
+      .then(collection => {
+        if (!collection.empty) {
+          collection.forEach(doc => {
+            doc.ref.delete()
+          })
+        }
+      })
   })
 }
 
