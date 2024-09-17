@@ -36,7 +36,7 @@ const addEventsQueue = async (change, context) => {
         .then(() => {
           docOldestEvent.ref.set({
             processingAt: Timestamp.now()
-          })
+          }, { merge: true })
         })
 
       await docRefQueue.ref.set({
