@@ -47,7 +47,17 @@ const addEventsQueue = async (change, context) => {
         updatedAt: Timestamp.now()
       }, { merge: true })
     } else if (!isProcessing) {
+      const attempts = (oldestEvent.attempts || 0) + 1
+      delete oldestEvent.processingAt
       await docOldestEvent.ref.delete()
+      if (attempts <= 3) {
+        await admin.firestore().doc(`${documentId}`)
+          .set({
+            ...oldestEvent,
+            createadAt: Timestamp.now(),
+            attempts
+          })
+      }
     }
   }
 
