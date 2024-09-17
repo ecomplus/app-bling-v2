@@ -225,6 +225,17 @@ const createPubSubFunction = (
       const eventAgeMs = Date.now() - Date.parse(context.timestamp)
       if (eventAgeMs > eventMaxAgeMs) {
         logger.warn(`Dropping event ${context.eventId} with age[ms]: ${eventAgeMs}`)
+        const documentId = message.json.documentId
+        if (documentId) {
+          return admin.firestore().doc(`${documentId}`)
+            .get()
+            .then(async (docRef) => {
+              if (docRef.exists) {
+                logger.warn(`delete docummet ${documentId}`)
+                await docRef.ref.delete()
+              }
+            })
+        }
         return
       }
       return fn(message.json, context, message)
