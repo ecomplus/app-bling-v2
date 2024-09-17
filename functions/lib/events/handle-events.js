@@ -72,24 +72,24 @@ const handleEvents = async (
         })
           .catch(async (err) => {
             logger.warn('Catch error')
+            logger.error(err)
             if (err.response?.status === 503) {
               setTimeout(() => {
-                logger.warn(`> Error ${documentId}`)
-                docRef.ref.delete()
-                delete data.processingAt
-                return admin.firestore().doc(`${documentId}`)
-                  .set({
-                    ...data,
+                logger.warn(`> Error 503: ${documentId}`)
+                return docRef.ref
+                  .update({
+                    processingAt: admin.firestore.FieldValue.delete(),
                     createdAt: Timestamp.now()
                   })
                 // throw err
               }, 1000)
               return
+            } else if (err.response?.data) {
+              logger.warn(`data Error: ${JSON.stringify(err.response.data)}`)
             }
 
-            logger.error(err)
             if (!queueEntry.isNotQueued) {
-              return log({ appSdk, storeId }, queueEntry, err)
+              log({ appSdk, storeId }, queueEntry, err)
             }
 
             throw err
