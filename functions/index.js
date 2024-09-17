@@ -170,4 +170,4 @@ console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
 
 const handleEvents = require('./lib/events/handle-events')
 exports.onHandleEvents = require('./lib/events/utils')
-  .createEventsFunction('events', createExecContext(handleEvents))
+  .createEventsFunction('webhooks', createExecContext(handleEvents))

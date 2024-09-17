@@ -35,7 +35,7 @@ const addEventsQueue = async (change, context) => {
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limitTimeProcessing
     if (!processingAt) {
-      await sendMessageTopic('events', { documentId, storeId })
+      await sendMessageTopic('webhooks', { documentId, storeId })
         .then(() => {
           logger.info(`> Start ${docOldestEvent.id} => ${documentId}`)
           return docOldestEvent.ref.set({
