@@ -37,7 +37,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           const { numero } = pedido
           const resourceId = `${numero}`
           const docRef = getFirestore()
-            .doc(`${nameCollectionEvents}_bling/${storeId}_order_${numero}`)
+            .doc(`queue/${storeId}/${nameCollectionEvents}/order_${numero}`)
           promises.push(docRef.set({
             ...body,
             resourceId,
@@ -53,7 +53,7 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           const { id, codigo } = estoque
           const resourceId = `${codigo};:`
           const docRef = getFirestore()
-            .doc(`${nameCollectionEvents}_bling/${storeId}_product_${id}`)
+            .doc(`queue/${storeId}/${nameCollectionEvents}/product_${id}`)
           promises.push(docRef.set({
             ...body,
             resourceId,

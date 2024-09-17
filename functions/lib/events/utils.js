@@ -1,5 +1,10 @@
 const admin = require('firebase-admin')
+const functions = require('firebase-functions')
+const { PubSub } = require('@google-cloud/pubsub')
 const { setup } = require('@ecomplus/application-sdk')
+const { logger } = require('../../context')
+const getAppData = require('../store-api/get-app-data')
+const updateAppData = require('../store-api/update-app-data')
 
 const getAppSdk = () => {
   return new Promise(resolve => {
@@ -7,10 +12,6 @@ const getAppSdk = () => {
       .then(appSdk => resolve(appSdk))
   })
 }
-
-const { logger } = require('../../context')
-const getAppData = require('../store-api/get-app-data')
-const updateAppData = require('../store-api/update-app-data')
 
 const queueRetry = (appSession, { action, queue, nextId }, appData, response) => {
   const retryKey = `${appSession.storeId}_${action}_${queue}_${nextId}`
@@ -198,7 +199,63 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
     .catch(logger.error)
 }
 
+const deleteCollection = async (collectionName) => {
+  const collection = await admin.firestore()
+    .collection(collectionName)
+    .get()
+
+  collection.forEach(doc => {
+    doc.ref.delete()
+      .catch(logger.error)
+  })
+}
+
+const getPubSubTopic = (eventName) => {
+  return `${eventName}_events`
+}
+
+const createPubSubFunction = (
+  pubSubTopic,
+  fn,
+  eventMaxAgeMs = (2 * 60 * 1000)
+) => {
+  return functions
+    .runWith({ failurePolicy: true })
+    .pubsub.topic(pubSubTopic).onPublish((message, context) => {
+      const eventAgeMs = Date.now() - Date.parse(context.timestamp)
+      if (eventAgeMs > eventMaxAgeMs) {
+        logger.warn(`Dropping event ${context.eventId} with age[ms]: ${eventAgeMs}`)
+        return
+      }
+      return fn(message.json, context, message)
+    })
+}
+
+const createEventsFunction = (
+  eventName,
+  fn,
+  eventMaxAgeMs = (2 * 60 * 1000)
+) => {
+  const topicName = getPubSubTopic(eventName)
+  return createPubSubFunction(topicName, fn, eventMaxAgeMs)
+}
+
+const sendMessageTopic = async (eventName, json) => {
+  const topicName = getPubSubTopic(eventName)
+  const messageId = await new PubSub()
+    .topic(topicName)
+    .publishMessage({ json })
+
+  logger.info(`>> MessageId: ${messageId} Topic: ${topicName}`)
+
+  return Promise.resolve(200)
+}
+
 module.exports = {
   getAppSdk,
-  log
+  log,
+  deleteCollection,
+  getPubSubTopic,
+  createEventsFunction,
+  sendMessageTopic
 }
