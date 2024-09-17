@@ -142,56 +142,56 @@ const addEventsQueue = async (change, context) => {
 }
 
 const eventQueueController = async (change, context) => {
-  const { docId } = context.params
-  if (!change.after.exists) {
-    return null
-  }
+  // const { docId } = context.params
+  // if (!change.after.exists) {
+  //   return null
+  // }
 
-  logger.info(`docId: ${docId}`)
-  const docController = change.after
+  // logger.info(`docId: ${docId}`)
+  // const docController = change.after
 
-  const {
-    storeId,
-    runDocId,
-    queue,
-    processingAt
-  } = docController.data()
+  // const {
+  //   storeId,
+  //   runDocId,
+  //   queue,
+  //   processingAt
+  // } = docController.data()
 
-  if (storeId > 100) {
-    // TODO:
-    if (storeId === 1024) {
-      return null
-    }
-    const documentId = queue && queue.length && queue[0]
-    const now = Timestamp.now()
-    const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
-    const isProcessing = processingTime && processingTime < limiteTime
-    logger.info(`${runDocId} => ${documentId} ${isProcessing}`)
-    if (documentId && (!runDocId || !isProcessing)) {
-      const docQueue = await firestore().doc(documentId).get()
-      if (docQueue.exists) {
-        console.log(docQueue.data())
-        await docController.ref.update({
-          runDocId: documentId,
-          processingAt: now
-        })
+  // if (storeId > 100) {
+  //   // TODO:
+  //   if (storeId === 1024) {
+  //     return null
+  //   }
+  //   const documentId = queue && queue.length && queue[0]
+  //   const now = Timestamp.now()
+  //   const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
+  //   const isProcessing = processingTime && processingTime < limiteTime
+  //   logger.info(`${runDocId} => ${documentId} ${isProcessing}`)
+  //   if (documentId && (!runDocId || !isProcessing)) {
+  //     const docQueue = await firestore().doc(documentId).get()
+  //     if (docQueue.exists) {
+  //       console.log(docQueue.data())
+  //       await docController.ref.update({
+  //         runDocId: documentId,
+  //         processingAt: now
+  //       })
 
-        await runDoc(documentId, docQueue)
-          .then(async () => {
-            await docController.ref.update({
-              runDocId: firestore.FieldValue.delete()
-            })
-            logger.info(`> finish ${documentId}`)
-          })
-      } else {
-        logger.info(`> arrayRemove ${documentId}`)
-        await docController.ref.update({
-          queue: firestore.FieldValue.arrayRemove(documentId),
-          updatedAt: new Date().toISOString()
-        })
-      }
-    }
-  }
+  //       await runDoc(documentId, docQueue)
+  //         .then(async () => {
+  //           await docController.ref.update({
+  //             runDocId: firestore.FieldValue.delete()
+  //           })
+  //           logger.info(`> finish ${documentId}`)
+  //         })
+  //     } else {
+  //       logger.info(`> arrayRemove ${documentId}`)
+  //       await docController.ref.update({
+  //         queue: firestore.FieldValue.arrayRemove(documentId),
+  //         updatedAt: new Date().toISOString()
+  //       })
+  //     }
+  //   }
+  // }
 
   return null
 }
