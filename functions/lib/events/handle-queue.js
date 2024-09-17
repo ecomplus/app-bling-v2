@@ -1,13 +1,13 @@
 const admin = require('firebase-admin')
 const { nameCollectionEvents } = require('../../__env')
 const { sendMessageTopic } = require('./utils')
+const { logger } = require('../../context')
 
 const limitTimeProcessing = (2 * 60 * 1000)
 const Timestamp = admin.firestore.Timestamp
 
 const addEventsQueue = async (change, context) => {
   const strStoreId = context.params.storeId
-  // const docId = context.params.docId
   if (strStoreId === '1024' || strStoreId === '51372') {
     return null
   }
@@ -37,7 +37,8 @@ const addEventsQueue = async (change, context) => {
     if (!processingAt) {
       await sendMessageTopic('events', { documentId, storeId })
         .then(() => {
-          docOldestEvent.ref.set({
+          logger.info(`> Start ${docOldestEvent.id} => ${documentId}`)
+          return docOldestEvent.ref.set({
             processingAt: Timestamp.now()
           }, { merge: true })
         })
