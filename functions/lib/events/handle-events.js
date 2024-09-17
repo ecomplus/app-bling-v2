@@ -71,6 +71,7 @@ const handleEvents = async (
           return log({ appSdk, storeId }, queueEntry, response)
         })
           .catch(async (err) => {
+            logger.warn('Catch error')
             if (err.response?.status === 503) {
               setTimeout(() => {
                 logger.warn(`> Error ${documentId}`)
@@ -89,7 +90,12 @@ const handleEvents = async (
             logger.error(err)
             if (!queueEntry.isNotQueued) {
               return log({ appSdk, storeId }, queueEntry, err)
+                .then(() => {
+                  throw err
+                })
             }
+
+            throw err
           })
       }
     }
