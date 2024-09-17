@@ -90,9 +90,6 @@ const handleEvents = async (
             logger.error(err)
             if (!queueEntry.isNotQueued) {
               return log({ appSdk, storeId }, queueEntry, err)
-                .then(() => {
-                  throw err
-                })
             }
 
             throw err
