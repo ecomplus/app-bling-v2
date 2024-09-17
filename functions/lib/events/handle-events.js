@@ -160,7 +160,8 @@ const eventQueueController = async (change, context) => {
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limiteTime
-    if (!runDocId || (runDocId === documentId && !isProcessing)) {
+    logger.info(`${runDocId} => ${documentId} ${isProcessing}`)
+    if ((!runDocId && documentId) || (runDocId === documentId && !isProcessing)) {
       // ler o documento
     // adiciona no docRun e
     // processing
