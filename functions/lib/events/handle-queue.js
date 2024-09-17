@@ -8,7 +8,7 @@ const Timestamp = admin.firestore.Timestamp
 
 const addEventsQueue = async (change, context) => {
   const strStoreId = context.params.storeId
-  if (strStoreId === '1024' || strStoreId === '51372') {
+  if (strStoreId !== '1131') {
     return null
   }
 
