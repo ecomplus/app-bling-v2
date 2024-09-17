@@ -200,19 +200,14 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
 }
 
 const deleteCollection = async () => {
-  const collections = ['queue', 'events_bling']
-  collections.forEach((collectionName) => {
-    admin.firestore()
-      .collection(collectionName)
-      .get()
-      .then(collection => {
-        if (!collection.empty) {
-          collection.forEach(doc => {
-            doc.ref.delete()
-          })
-        }
-      })
-  })
+  admin.firestore()
+    .doc('queue/1131/events/ecomplus_66e4742d9e4b2e07f50a9bb8')
+    .get()
+    .then(doc => {
+      if (doc.exists) {
+        doc.ref.delete()
+      }
+    })
 }
 
 const getPubSubTopic = (eventName) => {
