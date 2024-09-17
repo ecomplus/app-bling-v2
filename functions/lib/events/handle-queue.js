@@ -52,7 +52,7 @@ const addEventsQueue = async (change, context) => {
         await docOldestEvent.ref
           .update({
             processingAt: admin.firestore.FieldValue.delete(),
-            createadAt: Timestamp.now(),
+            createdAt: Timestamp.now(),
             attempts
           })
       } else {
