@@ -33,7 +33,7 @@ const runDoc = async (docId, doc) => {
     // processingAt
   } = data
 
-  logger.info(`Event ${eventBy} StoreId ${storeId}`)
+  logger.info(`> [${docId}]: Event ${eventBy} StoreId ${storeId}`)
   const now = Timestamp.now()
   // const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
   // const isProcessing = processingTime && processingTime < limiteTime
@@ -77,32 +77,26 @@ const runDoc = async (docId, doc) => {
         .catch(async (err) => {
           logger.error(err)
           const now = Timestamp.now()
-          // const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
-          // const isProcessing = processingTime && processingTime < limiteTime
           const attempts = (data.attempts || 0) + 1
           await doc.ref.delete()
           if (attempts < 3) {
+            // retry
             await firestore().doc(docId).set({
               ...data,
+              attempts,
               createdAt: now
             })
-          //   const delay = (timeout) => new Promise(resolve => setTimeout(() => resolve(true), timeout || 60 * 1000))
-          //   // update to retry
-          //   await delay(isProcessing ? (limiteTime - processingTime) : 10)
-          //   await doc.ref.set({ attempts }, { merge: true })
           }
 
           if (!queueEntry.isNotQueued) {
             return log({ appSdk, storeId }, queueEntry, err)
           }
-          // throw err
         })
     }
   }
-  // }
 }
 
-const addQueueEvents = async (change, context) => {
+const addEventsQueue = async (change, context) => {
   const { docId } = context.params
   const collectionPath = context.resource.name
   const collectionName = collectionPath.split('/')[5]
@@ -141,21 +135,21 @@ const addQueueEvents = async (change, context) => {
   return null
 }
 
-const controllerQueueEvents = async (change, context) => {
+const eventQueueController = async (change, context) => {
   const { docId } = context.params
   if (!change.after.exists) {
     return null
   }
 
   logger.info(`docId: ${docId}`)
-  const doc = change.after
+  const docController = change.after
 
   const {
     storeId,
     runDocId,
     queue,
     processingAt
-  } = doc.data()
+  } = docController.data()
 
   if (storeId > 100) {
     // TODO:
@@ -177,16 +171,17 @@ const controllerQueueEvents = async (change, context) => {
         console.log(docQueue.data())
       }
 
-      await doc.ref.update({
+      await docController.ref.update({
         runDocId: documentId,
         processingAt: now
       })
 
-      await runDoc(docId, docQueue)
-        .then(() => {
-          doc.ref.update({
+      await runDoc(documentId, docQueue)
+        .then(async () => {
+          await docController.ref.update({
             runDocId: firestore.FieldValue.delete()
           })
+          logger.info(`> finish ${documentId}`)
         })
     }
   }
@@ -195,6 +190,6 @@ const controllerQueueEvents = async (change, context) => {
 }
 
 module.exports = {
-  addQueueEvents,
-  controllerQueueEvents
+  addEventsQueue,
+  eventQueueController
 }
