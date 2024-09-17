@@ -281,13 +281,13 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
             function updateExternas (newMedia) {
               const existingLinks = new Set(blingProduct.midia.imagens.externas.map(item => getBaseUrl(item.link)))
 
-              newMedia.midia.imagens?.externas?.forEach(({ link }) => {
-                const baseUrl = getBaseUrl(link)
-                if (!existingLinks.has(baseUrl)) {
-                  blingProduct.midia.imagens.externas.push({ link })
-                  existingLinks.add(baseUrl) // Add base URL to set to keep track of what has been added
-                }
-              })
+              // newMedia.midia.imagens?.externas?.forEach(({ link }) => {
+              const baseUrl = getBaseUrl(newMedia.link)
+              if (!existingLinks.has(baseUrl)) {
+                blingProduct.midia.imagens.externas.push({ link: newMedia.link })
+                existingLinks.add(baseUrl) // Add base URL to set to keep track of what has been added
+              }
+              // })
             }
 
             if (specTexts.length) {
