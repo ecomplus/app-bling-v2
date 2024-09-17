@@ -168,28 +168,28 @@ const eventQueueController = async (change, context) => {
     const isProcessing = processingTime && processingTime < limiteTime
     logger.info(`${runDocId} => ${documentId} ${isProcessing}`)
     if (documentId && (!runDocId || !isProcessing)) {
-      // ler o documento
-    // adiciona no docRun e
-    // processing
-    // e executo
-    // quando finalizar remove o docRun
       const docQueue = await firestore().doc(documentId).get()
       if (docQueue.exists) {
         console.log(docQueue.data())
-      }
-
-      await docController.ref.update({
-        runDocId: documentId,
-        processingAt: now
-      })
-
-      await runDoc(documentId, docQueue)
-        .then(async () => {
-          await docController.ref.update({
-            runDocId: firestore.FieldValue.delete()
-          })
-          logger.info(`> finish ${documentId}`)
+        await docController.ref.update({
+          runDocId: documentId,
+          processingAt: now
         })
+
+        await runDoc(documentId, docQueue)
+          .then(async () => {
+            await docController.ref.update({
+              runDocId: firestore.FieldValue.delete()
+            })
+            logger.info(`> finish ${documentId}`)
+          })
+      } else {
+        logger.info(`> arrayRemove ${documentId}`)
+        await docController.ref.update({
+          queue: firestore.FieldValue.arrayRemove(documentId),
+          updatedAt: new Date().toISOString()
+        })
+      }
     }
   }
 
