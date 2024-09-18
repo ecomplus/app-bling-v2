@@ -17,14 +17,14 @@ const integrationHandlers = {
 
 // const limiteTime = (2 * 60 * 1000)
 
-const handleEvents = async (
-  {
+const handleEvents = async (snap, context) => {
+  const eventId = context.params.docId
+  const {
     documentId,
     storeId
-  },
-  context
-) => {
-  logger.info(`>[${storeId}] Exec Event ${context.eventId} => ${documentId}`)
+  } = snap.data()
+
+  logger.info(`>[${storeId}] Exec Event ${eventId} => ${documentId}`)
   const docRef = await admin.firestore().doc(`${documentId}`).get()
   const data = docRef?.data()
 
@@ -71,7 +71,6 @@ const handleEvents = async (
         })
           .catch(async (err) => {
             logger.error(err)
-            console.log(`${err.name} => ${err.message}`)
             if (err.message === 'Bling refreshToken is invalid need to update') {
               logger.warn(`> delete: ${documentId}`)
               return docRef.ref
@@ -98,11 +97,16 @@ const handleEvents = async (
               log({ appSdk, storeId }, queueEntry, err)
             }
 
-            throw err
+            // throw err
           })
       }
     }
   }
+
+  return snap.ref.delete()
+    .then(() => {
+      logger.info(`>[${storeId}] Finish Event ${eventId} => ${documentId}`)
+    })
 }
 
 module.exports = handleEvents

@@ -148,11 +148,16 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
 })
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
-exports.queueEvents = functions.firestore
+exports.eventsQueue = functions.firestore
   .document(`queue/{storeId}/${nameCollectionEvents}/{docId}`)
   .onWrite(createExecContext(addEventsQueue))
-console.log('-- Starting events E-Com Plus with Function \'eventsEcomplus\'')
+console.log('-- Starting the event queue')
 
 const handleEvents = require('./lib/events/handle-events')
-exports.onHandleEvents = require('./lib/events/utils')
-  .createEventsFunction('webhooks', createExecContext(handleEvents))
+// exports.onHandleEvents = require('./lib/events/utils')
+//   .createEventsFunction('webhooks', createExecContext(handleEvents))
+
+exports.onHandleEvents = functions.firestore
+  .document('running_events/{docId}')
+  .onWrite(createExecContext(handleEvents))
+console.log('-- Starting running events')

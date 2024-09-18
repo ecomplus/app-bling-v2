@@ -1,10 +1,20 @@
 const admin = require('firebase-admin')
 const { nameCollectionEvents } = require('../../__env')
-const { sendMessageTopic } = require('./utils')
+// const { sendMessageTopic } = require('./utils')
 const { logger } = require('../../context')
 
 const limitTimeProcessing = (2 * 60 * 1000)
 const Timestamp = admin.firestore.Timestamp
+const createEvent = async (storeId, id, documentId) => {
+  return admin.firestore().doc(`running_events/${storeId}_${id}`)
+    .set({
+      documentId,
+      storeId,
+      createdAt: new Date().toISOString(),
+      status: 'create'
+    }, { merge: true })
+  // return sendMessageTopic('webhooks', { documentId, storeId })
+}
 
 const addEventsQueue = async (change, context) => {
   const strStoreId = context.params.storeId
@@ -30,18 +40,19 @@ const addEventsQueue = async (change, context) => {
       processingAt
     } = oldestEvent
 
-    const documentId = `${collectionName}/${docOldestEvent.id}`
+    const id = docOldestEvent.id
+    const documentId = `${collectionName}/${id}`
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limitTimeProcessing
     if (!processingAt) {
-      await sendMessageTopic('webhooks', { documentId, storeId })
+      await createEvent(storeId, id, documentId)
         .then(async (messageId) => {
-          logger.info(`> Start ${docOldestEvent.id} => ${documentId}`)
-          await docOldestEvent.ref.set({
+          logger.info(`>[${storeId}] Send event ${id} => ${documentId}`)
+          await docOldestEvent.ref.update({
             processingAt: Timestamp.now(),
             eventId: messageId
-          }, { merge: true })
+          })
         })
         .catch(async (err) => {
           logger.error(err)
