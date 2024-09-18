@@ -52,11 +52,10 @@ const addEventsQueue = async (change, context) => {
     const isProcessing = processingTime && processingTime < limitTimeProcessing
     if (!processingAt) {
       await createEvent(storeId, id, documentId)
-        .then(async (messageId) => {
+        .then(async () => {
           logger.info(`>[${storeId}] Send event ${id} => ${documentId}`)
           await docOldestEvent.ref.update({
-            processingAt: Timestamp.now(),
-            eventId: messageId
+            processingAt: Timestamp.now()
           })
         })
         .catch(async (err) => {
