@@ -71,7 +71,9 @@ const addEventsQueue = async (change, context) => {
         })
 
       await docRefQueue.ref.set({
-        updatedAt: Timestamp.now()
+        updatedAt: admin.firestore.FieldValue.delete(),
+        lastTimeExecuted: Timestamp.now(),
+        lastExecuted: documentId
       }, { merge: true })
     } else if (!isProcessing) {
       await deleteEvent(storeId, id) // event starts only on creation
