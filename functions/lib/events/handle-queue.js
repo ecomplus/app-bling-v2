@@ -5,6 +5,11 @@ const { logger } = require('../../context')
 
 const limitTimeProcessing = (2 * 60 * 1000)
 const Timestamp = admin.firestore.Timestamp
+
+const deleteEvent = (storeId, id) => {
+  return admin.firestore().doc(`running_events/${storeId}_${id}`)
+    .delete()
+}
 const createEvent = async (storeId, id, documentId) => {
   return admin.firestore().doc(`running_events/${storeId}_${id}`)
     .set({
@@ -66,6 +71,8 @@ const addEventsQueue = async (change, context) => {
         updatedAt: Timestamp.now()
       }, { merge: true })
     } else if (!isProcessing) {
+      await deleteEvent(storeId, id) // event starts only on creation
+
       const attempts = (oldestEvent.attempts || 0) + 1
       if (attempts <= 4) {
         // send to the end of the queue
@@ -76,6 +83,7 @@ const addEventsQueue = async (change, context) => {
             attempts
           })
       } else {
+        await deleteEvent(storeId, id) // event starts only on creation
         await docOldestEvent.ref.delete()
       }
     }
