@@ -42,7 +42,8 @@ const addEventsQueue = async (change, context) => {
     const oldestEvent = docOldestEvent.data()
     const {
       storeId,
-      processingAt
+      processingAt,
+      attempts
     } = oldestEvent
 
     const id = docOldestEvent.id
@@ -50,7 +51,7 @@ const addEventsQueue = async (change, context) => {
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limitTimeProcessing
-    if (!storeId) {
+    if (!storeId || attempts > 3) {
       await deleteEvent(storeId, id) // event starts only on creation
       await docOldestEvent.ref.delete()
     } else if (!processingAt) {
@@ -76,7 +77,7 @@ const addEventsQueue = async (change, context) => {
       await deleteEvent(storeId, id) // event starts only on creation
 
       const attempts = (oldestEvent.attempts || 0) + 1
-      if (attempts <= 4) {
+      if (attempts <= 3) {
         // send to the end of the queue
         await docOldestEvent.ref
           .update({

@@ -71,6 +71,7 @@ const handleEvents = async (snap, context) => {
         })
           .catch(async (err) => {
             logger.error(err)
+            const attempts = (data.attempts || 0) + 1
             let message = err.message
 
             if (err.message === 'Bling refreshToken is invalid need to update') {
@@ -85,8 +86,9 @@ const handleEvents = async (snap, context) => {
                 logger.warn(`> Error 503: ${documentId}`)
                 return docRef.ref
                   .update({
+                    processingAt: admin.firestore.FieldValue.delete(),
                     createdAt: Timestamp.now(),
-                    message
+                    attempts
                   })
               }, 1000)
               return
@@ -102,8 +104,10 @@ const handleEvents = async (snap, context) => {
             // send to the end of the queue
             return docRef.ref
               .update({
+                processingAt: admin.firestore.FieldValue.delete(),
                 createdAt: Timestamp.now(),
-                message
+                message,
+                attempts
               })
           })
       }
