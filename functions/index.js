@@ -159,5 +159,5 @@ const handleEvents = require('./lib/events/handle-events')
 
 exports.onHandleEvents = functions.firestore
   .document('running_events/{docId}')
-  .onWrite(createExecContext(handleEvents))
+  .onCreate(createExecContext(handleEvents))
 console.log('-- Starting running events')
