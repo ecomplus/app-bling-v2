@@ -73,7 +73,7 @@ const handleEvents = async (snap, context) => {
             logger.error(err)
             if (err.message === 'Bling refreshToken is invalid need to update') {
               logger.warn(`> delete: ${documentId}`)
-              return docRef.ref
+              await docRef.ref
                 .delete()
             }
 
@@ -103,6 +103,7 @@ const handleEvents = async (snap, context) => {
     }
   }
 
+  logger.info(`>[${storeId}] Try Finish Event ${eventId} => ${documentId}`)
   return snap.ref.delete()
     .then(() => {
       logger.info(`>[${storeId}] Finish Event ${eventId} => ${documentId}`)
