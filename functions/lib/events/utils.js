@@ -1,6 +1,4 @@
 const admin = require('firebase-admin')
-const functions = require('firebase-functions')
-const { PubSub } = require('@google-cloud/pubsub')
 const { setup } = require('@ecomplus/application-sdk')
 const { logger } = require('../../context')
 const getAppData = require('../store-api/get-app-data')
@@ -199,62 +197,7 @@ const log = ({ appSdk, storeId }, queueEntry, payload) => {
     .catch(logger.error)
 }
 
-const getPubSubTopic = (eventName) => {
-  return `${eventName}_events`
-}
-
-const createPubSubFunction = (
-  pubSubTopic,
-  fn,
-  eventMaxAgeMs = (2 * 60 * 1000)
-) => {
-  return functions
-    .runWith({ failurePolicy: true })
-    .pubsub.topic(pubSubTopic).onPublish((message, context) => {
-      const eventAgeMs = Date.now() - Date.parse(context.timestamp)
-      if (eventAgeMs > eventMaxAgeMs) {
-        logger.warn(`Dropping event ${context.eventId} with age[ms]: ${eventAgeMs}`)
-        const documentId = message.json.documentId
-        if (documentId) {
-          return admin.firestore().doc(`${documentId}`)
-            .get()
-            .then(async (docRef) => {
-              if (docRef.exists) {
-                logger.warn(`Delete document ${documentId}`)
-                await docRef.ref.delete()
-              }
-            })
-        }
-        return
-      }
-      return fn(message.json, context, message)
-    })
-}
-
-const createEventsFunction = (
-  eventName,
-  fn,
-  eventMaxAgeMs = (2 * 60 * 1000)
-) => {
-  const topicName = getPubSubTopic(eventName)
-  return createPubSubFunction(topicName, fn, eventMaxAgeMs)
-}
-
-const sendMessageTopic = async (eventName, json) => {
-  const topicName = getPubSubTopic(eventName)
-  const messageId = await new PubSub()
-    .topic(topicName)
-    .publishMessage({ json })
-
-  logger.info(`>> MessageId: ${messageId} Topic: ${topicName}`)
-
-  return Promise.resolve(messageId)
-}
-
 module.exports = {
   getAppSdk,
-  log,
-  getPubSubTopic,
-  createEventsFunction,
-  sendMessageTopic
+  log
 }

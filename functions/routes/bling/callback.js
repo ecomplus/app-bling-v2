@@ -1,6 +1,8 @@
 const { Timestamp, getFirestore } = require('firebase-admin/firestore')
 const { logger } = require('../../context')
 const { nameCollectionEvents } = require('../../__env')
+const Bling = require('../../lib/bling-auth/client')
+const getAppData = require('../../lib/store-api/get-app-data')
 
 exports.post = async ({ appSdk, admin }, req, res) => {
   // const startTime = Date.now()
@@ -9,6 +11,24 @@ exports.post = async ({ appSdk, admin }, req, res) => {
   logger.info(`storeId: ${storeId} ${JSON.stringify(req.body)}`)
 
   if (storeId > 100 && req.body) {
+    const appData = await appSdk.getAuth(storeId)
+      .then((auth) => getAppData({ appSdk, storeId, auth }))
+
+    const { client_id: clientId, client_secret: clientSecret } = appData
+    const bling = new Bling(clientId, clientSecret, storeId)
+    const isApiBlingOk = await bling.get('/produtos?limite=1')
+      .then(async ({ data }) => {
+        return true
+      })
+      .catch((_err) => {
+        return false
+      })
+
+    if (!isApiBlingOk) {
+      logger.warn('> Error in request to api Bling')
+      return res.sendStatus(403)
+    }
+
     let { retorno } = req.body
     if (!retorno && typeof req.body.data === 'string') {
       try {

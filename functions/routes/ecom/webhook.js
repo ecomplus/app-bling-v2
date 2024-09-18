@@ -3,6 +3,7 @@ const { logger } = require('./../../context')
 const getAppData = require('../../lib/store-api/get-app-data')
 const { Timestamp, getFirestore } = require('firebase-admin/firestore')
 const { nameCollectionEvents } = require('./../../__env')
+const Bling = require('../../lib/bling-auth/client')
 
 const integrationHandlers = {
   exportation: {
@@ -127,6 +128,22 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               logger.info(`Integration config  ${JSON.stringify(integrationConfig)}`)
               // const actions = ['exportation', 'importation']
               if (integrationConfig) {
+                const { client_id: clientId, client_secret: clientSecret } = appData
+                const bling = new Bling(clientId, clientSecret, storeId)
+                const isApiBlingOk = await bling.get('/produtos?limite=1')
+                  .then(async ({ data }) => {
+                    return true
+                  })
+                  .catch((_err) => {
+                    return false
+                  })
+
+                if (!isApiBlingOk) {
+                  logger.warn('> Error in request to api Bling')
+                  return {}
+                }
+
+                // const Bling = require('../bling-auth/client')
                 const actions = Object.keys(integrationHandlers)
                 actions.forEach(action => {
                   for (let i = 1; i <= 3; i++) {

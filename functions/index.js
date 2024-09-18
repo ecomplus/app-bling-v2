@@ -154,8 +154,6 @@ exports.eventsQueue = functions.firestore
 console.log('-- Starting the event queue')
 
 const handleEvents = require('./lib/events/handle-events')
-// exports.onHandleEvents = require('./lib/events/utils')
-//   .createEventsFunction('webhooks', createExecContext(handleEvents))
 
 exports.onHandleQueue = functions.firestore
   .document('running_events/{docId}')
