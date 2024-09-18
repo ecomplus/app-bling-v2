@@ -71,6 +71,8 @@ const handleEvents = async (snap, context) => {
         })
           .catch(async (err) => {
             logger.error(err)
+            let message = err.message
+
             if (err.message === 'Bling refreshToken is invalid need to update') {
               logger.warn(`> delete: ${documentId}`)
               await docRef.ref
@@ -86,18 +88,24 @@ const handleEvents = async (snap, context) => {
                     processingAt: admin.firestore.FieldValue.delete(),
                     createdAt: Timestamp.now()
                   })
-                // throw err
               }, 1000)
               return
             } else if (err.response?.data) {
               logger.warn(`data Error: ${JSON.stringify(err.response.data)}`)
+              message += ` => ${JSON.stringify(err.response.data)}`
             }
 
             if (!queueEntry.isNotQueued) {
               log({ appSdk, storeId }, queueEntry, err)
             }
 
-            // throw err
+            // send to the end of the queue
+            return docRef.ref
+              .update({
+                processingAt: admin.firestore.FieldValue.delete(),
+                createdAt: Timestamp.now(),
+                message
+              })
           })
       }
     }
