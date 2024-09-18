@@ -111,7 +111,6 @@ const handleEvents = async (snap, context) => {
     }
   }
 
-  logger.info(`>[${storeId}] Try Finish Event ${eventId} => ${documentId}`)
   return snap.ref.delete()
     .then(() => {
       logger.info(`>[${storeId}] Finish Event ${eventId} => ${documentId}`)
