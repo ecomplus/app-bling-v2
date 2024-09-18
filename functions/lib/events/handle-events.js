@@ -85,8 +85,8 @@ const handleEvents = async (snap, context) => {
                 logger.warn(`> Error 503: ${documentId}`)
                 return docRef.ref
                   .update({
-                    processingAt: admin.firestore.FieldValue.delete(),
-                    createdAt: Timestamp.now()
+                    createdAt: Timestamp.now(),
+                    message
                   })
               }, 1000)
               return
@@ -102,7 +102,6 @@ const handleEvents = async (snap, context) => {
             // send to the end of the queue
             return docRef.ref
               .update({
-                processingAt: admin.firestore.FieldValue.delete(),
                 createdAt: Timestamp.now(),
                 message
               })
