@@ -50,7 +50,10 @@ const addEventsQueue = async (change, context) => {
     const now = Timestamp.now()
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limitTimeProcessing
-    if (!processingAt) {
+    if (!storeId) {
+      await deleteEvent(storeId, id) // event starts only on creation
+      await docOldestEvent.ref.delete()
+    } else if (!processingAt) {
       await createEvent(storeId, id, documentId)
         .then(async () => {
           logger.info(`>[${storeId}] Send event ${id} => ${documentId}`)
