@@ -10,6 +10,7 @@ const recursiveReadDir = require('./lib/recursive-read-dir')
 // Firebase SDKs to setup cloud functions and access Firestore database
 const admin = require('firebase-admin')
 const functions = require('firebase-functions')
+const { firestore } = require('firebase-functions/v2')
 // const { onRequest } = require('firebase-functions/v2/https')
 admin.initializeApp()
 
@@ -148,14 +149,20 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
 })
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
-exports.eventsQueue = functions.firestore
-  .document(`queue/{storeId}/${nameCollectionEvents}/{docId}`)
-  .onWrite(createExecContext(addEventsQueue))
+exports.eventsQueue = firestore.onDocumentWritten(
+  `queue/{storeId}/${nameCollectionEvents}/{docId}`,
+  createExecContext(addEventsQueue)
+)
+// .document(`queue/{storeId}/${nameCollectionEvents}/{docId}`)
+// .onWrite(createExecContext(addEventsQueue))
 console.log('-- Starting the event queue')
 
 const handleEvents = require('./lib/events/handle-events')
 
-exports.onHandleQueue = functions.firestore
-  .document('running_events/{docId}')
-  .onCreate(createExecContext(handleEvents))
+exports.onHandleQueue = firestore.onDocumentCreated(
+  'running_events/{docId}',
+  createExecContext(handleEvents)
+)
+// .document('running_events/{docId}')
+// .onCreate(createExecContext(handleEvents))
 console.log('-- Starting running events')

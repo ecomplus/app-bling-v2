@@ -17,8 +17,9 @@ const integrationHandlers = {
 
 // const limiteTime = (2 * 60 * 1000)
 
-const handleEvents = async (snap, context) => {
-  const eventId = context.params.docId
+const handleEvents = async (event) => {
+  const eventId = event.params.docId
+  const snap = event.data
   const {
     documentId,
     storeId

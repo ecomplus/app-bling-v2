@@ -37,8 +37,8 @@ const createEvent = async (storeId, id, documentId) => {
     .then(() => true)
 }
 
-const addEventsQueue = async (change, context) => {
-  const strStoreId = context.params.storeId
+const addEventsQueue = async (event) => {
+  const strStoreId = event.params.storeId
   const collectionName = `queue/${strStoreId}/${nameCollectionEvents}`
   const eventRef = admin.firestore().collection(collectionName)
   console.log(`> ${collectionName}`)
