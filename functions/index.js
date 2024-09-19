@@ -149,7 +149,7 @@ exports.updateTokens = functions.pubsub.schedule(cron).onRun(() => {
 })
 console.log(`-- Sheduled update E-Com Plus tokens '${cron}'`)
 
-exports.eventsQueue = firestore.onDocumentWritten(
+exports.eventsQueueV2 = firestore.onDocumentWritten(
   `queue/{storeId}/${nameCollectionEvents}/{docId}`,
   createExecContext(addEventsQueue)
 )
@@ -159,7 +159,7 @@ console.log('-- Starting the event queue')
 
 const handleEvents = require('./lib/events/handle-events')
 
-exports.onHandleQueue = firestore.onDocumentCreated(
+exports.onHandleQueueV2 = firestore.onDocumentCreated(
   'running_events/{docId}',
   createExecContext(handleEvents)
 )
