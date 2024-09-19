@@ -23,6 +23,7 @@ const createEvent = async (storeId, id, documentId) => {
           processingAt: admin.firestore.FieldValue.delete(),
           createdAt: Timestamp.now()
         })
+        .then(() => null)
     }
     return null
   }
@@ -33,6 +34,7 @@ const createEvent = async (storeId, id, documentId) => {
     createdAt: new Date().toISOString(),
     status: 'create'
   }, { merge: true })
+    .then(() => true)
 }
 
 const addEventsQueue = async (change, context) => {
@@ -70,11 +72,13 @@ const addEventsQueue = async (change, context) => {
       await docOldestEvent.ref.delete()
     } else if (!processingAt) {
       await createEvent(storeId, id, documentId)
-        .then(async () => {
-          logger.info(`>[${storeId}] Send event ${id} => ${documentId}`)
-          await docOldestEvent.ref.update({
-            processingAt: Timestamp.now()
-          })
+        .then(async (resp) => {
+          if (resp) {
+            logger.info(`>[${storeId}] Send event ${id} => ${documentId}`)
+            await docOldestEvent.ref.update({
+              processingAt: Timestamp.now()
+            })
+          }
         })
         .catch(async (err) => {
           logger.error(err)
