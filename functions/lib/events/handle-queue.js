@@ -11,13 +11,27 @@ const deleteEvent = (storeId, id) => {
     .delete()
 }
 const createEvent = async (storeId, id, documentId) => {
-  return admin.firestore().doc(`running_events/${storeId}_${id}`)
-    .set({
-      documentId,
-      storeId,
-      createdAt: new Date().toISOString(),
-      status: 'create'
-    }, { merge: true })
+  const docEvent = admin.firestore().doc(`running_events/${storeId}_${id}`)
+  const docEventSnapshot = await docEvent.get()
+  if (docEventSnapshot.exists) {
+    const { createdAt } = docEventSnapshot.data()
+    if ((Timestamp.now() - new Date(createdAt).getTime()) > limitTimeProcessing) {
+      await docEvent.delete()
+      return admin.firestore().doc(`${documentId}`)
+        .update({
+          processingAt: admin.firestore.FieldValue.delete(),
+          createdAt: Timestamp.now()
+        })
+    }
+    return null
+  }
+
+  return docEvent.set({
+    documentId,
+    storeId,
+    createdAt: new Date().toISOString(),
+    status: 'create'
+  }, { merge: true })
   // return sendMessageTopic('webhooks', { documentId, storeId })
 }
 
