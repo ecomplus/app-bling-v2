@@ -39,14 +39,9 @@ const createEvent = async (storeId, id, documentId) => {
 
 const addEventsQueue = async (change, context) => {
   const strStoreId = context.params.storeId
-  // if (strStoreId !== '1131') {
-  //   return null
-  // }
-
-  const docRefQueue = await admin.firestore().doc(`queue/${strStoreId}`).get()
-
   const collectionName = `queue/${strStoreId}/${nameCollectionEvents}`
   const eventRef = admin.firestore().collection(collectionName)
+  console.log(`> ${collectionName}`)
 
   const oldestEventSnapshot = await eventRef
     .orderBy('createdAt', 'asc')
@@ -88,7 +83,7 @@ const addEventsQueue = async (change, context) => {
           }, { merge: true })
         })
 
-      await docRefQueue.ref.set({
+      await admin.firestore().doc(`queue/${strStoreId}`).set({
         updatedAt: admin.firestore.FieldValue.delete(),
         lastTimeExecuted: Timestamp.now(),
         lastExecuted: documentId
