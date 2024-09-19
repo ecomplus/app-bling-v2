@@ -69,6 +69,7 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
           expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000))
         }, { merge: true })
         accessToken = data.access_token
+        console.log(`3 ${new Date().toISOString()}`)
         console.timeEnd('write')
       } catch (err) {
         logger.warn(`Cant refresh Bling OAtuh token ${JSON.stringify({
