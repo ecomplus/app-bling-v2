@@ -54,16 +54,22 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
     } else {
       try {
         // read the document again, because refreshToken is old
+        console.log(`1 ${new Date().toISOString()}`)
+        console.time('read')
         const doc = await docRef.get()
         const refreshToken = doc.data().refresh_token
+        console.timeEnd('read')
 
+        console.log(`2 ${new Date().toISOString()}`)
         const data = await blingAuth(clientId, clientSecret, null, storeId, refreshToken)
-        docRef.set({
+        console.time('write')
+        await docRef.set({
           ...data,
           updatedAt: now,
           expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000))
         }, { merge: true })
         accessToken = data.access_token
+        console.timeEnd('write')
       } catch (err) {
         logger.warn(`Cant refresh Bling OAtuh token ${JSON.stringify({
           url: err.config.url,
