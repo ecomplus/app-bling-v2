@@ -190,7 +190,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
       product.min_quantity = Number(blingProduct.itensPorCaixa)
     }
     if (blingProduct.tributacao && blingProduct.tributacao.ncm) {
-      product.mpn = [`${blingProduct.tributacao.ncm}`]
+      product.mpn = [String(blingProduct.tributacao.ncm)]
     }
     const validateGtin = gtin => typeof gtin === 'string' && /^([0-9]{8}|[0-9]{12,14})$/.test(gtin)
     if (validateGtin(blingProduct.gtin)) {
@@ -352,7 +352,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
                 }
               }
               if (tributacao && tributacao.ncm) {
-                variation.mpn = [`${tributacao.ncm}`]
+                variation.mpn = [String(tributacao.ncm)]
               }
             }
           }

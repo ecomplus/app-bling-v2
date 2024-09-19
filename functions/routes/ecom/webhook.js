@@ -126,7 +126,6 @@ exports.post = async ({ appSdk, admin }, req, res) => {
                 }
               }
               logger.info(`Integration config  ${JSON.stringify(integrationConfig)}`)
-              // const actions = ['exportation', 'importation']
               if (integrationConfig) {
                 const isApiBlingOk = await checkApiBling(storeId)
                 if (!isApiBlingOk) {

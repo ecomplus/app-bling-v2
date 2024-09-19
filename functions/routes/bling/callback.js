@@ -4,11 +4,8 @@ const { nameCollectionEvents } = require('../../__env')
 const checkApiBling = require('../../lib/bling-auth/check-enable-api')
 
 exports.post = async ({ appSdk, admin }, req, res) => {
-  // const startTime = Date.now()
   // const blingToken = req.query.token
   const storeId = parseInt(req.query.store_id, 10)
-  logger.info(`storeId: ${storeId} ${JSON.stringify(req.body)}`)
-
   if (storeId > 100 && req.body) {
     const isApiBlingOk = await checkApiBling(storeId)
 
@@ -16,6 +13,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
       logger.warn('> Error in request to api Bling')
       return res.sendStatus(403)
     }
+
+    logger.info(`storeId: ${storeId} ${JSON.stringify(req.body)}`)
 
     let { retorno } = req.body
     if (!retorno && typeof req.body.data === 'string') {
