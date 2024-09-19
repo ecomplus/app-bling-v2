@@ -17,6 +17,7 @@ const createEvent = async (storeId, id, documentId) => {
   if (docEventSnapshot.exists) {
     const { createdAt } = docEventSnapshot.data()
     if ((Timestamp.now() - new Date(createdAt).getTime()) > limitTimeProcessing) {
+      logger.info('1')
       await docEvent.delete()
       return admin.firestore().doc(`${documentId}`)
         .update({
@@ -25,9 +26,11 @@ const createEvent = async (storeId, id, documentId) => {
         })
         .then(() => null)
     }
+    logger.info('2')
     return null
   }
 
+  logger.info('3')
   return docEvent.set({
     documentId,
     storeId,
@@ -62,11 +65,9 @@ const addEventsQueue = async (event) => {
     const processingTime = processingAt && (now.toMillis() - processingAt.toMillis())
     const isProcessing = processingTime && processingTime < limitTimeProcessing
     if (!storeId || attempts > 3) {
-      logger.info('0')
       await deleteEvent(storeId, id) // event starts only on creation
       await docOldestEvent.ref.delete()
     } else if (!processingAt) {
-      logger.info('1')
       await createEvent(storeId, id, documentId)
         .then(async (resp) => {
           if (resp) {
@@ -90,7 +91,6 @@ const addEventsQueue = async (event) => {
         lastExecuted: documentId
       }, { merge: true })
     } else if (!isProcessing) {
-      logger.info('2')
       await deleteEvent(storeId, id) // event starts only on creation
 
       const attempts = (oldestEvent.attempts || 0) + 1
