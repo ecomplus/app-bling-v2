@@ -13,6 +13,7 @@ const deleteEvent = (storeId, id) => {
 const createEvent = async (storeId, id, documentId) => {
   const docEvent = admin.firestore().doc(`running_events/${storeId}_${id}`)
   const docEventSnapshot = await docEvent.get()
+
   if (docEventSnapshot.exists) {
     const { createdAt } = docEventSnapshot.data()
     if ((Timestamp.now() - new Date(createdAt).getTime()) > limitTimeProcessing) {
@@ -32,7 +33,6 @@ const createEvent = async (storeId, id, documentId) => {
     createdAt: new Date().toISOString(),
     status: 'create'
   }, { merge: true })
-  // return sendMessageTopic('webhooks', { documentId, storeId })
 }
 
 const addEventsQueue = async (change, context) => {
@@ -105,6 +105,9 @@ const addEventsQueue = async (change, context) => {
         await deleteEvent(storeId, id) // event starts only on creation
         await docOldestEvent.ref.delete()
       }
+    } else {
+      // now.toDate().toISOString()
+      console.log(`${documentId}, ${processingAt.toDate().toISOString()}, ${processingTime}`)
     }
   }
 
