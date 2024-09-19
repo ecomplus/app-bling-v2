@@ -17,7 +17,6 @@ const createEvent = async (storeId, id, documentId) => {
   if (docEventSnapshot.exists) {
     const { createdAt } = docEventSnapshot.data()
     if ((new Date().getTime() - new Date(createdAt).getTime()) > limitTimeProcessing) {
-      logger.info('1')
       await docEvent.delete()
       return admin.firestore().doc(`${documentId}`)
         .update({
@@ -28,7 +27,6 @@ const createEvent = async (storeId, id, documentId) => {
     }
   }
 
-  logger.info('3')
   return docEvent.set({
     documentId,
     storeId,
