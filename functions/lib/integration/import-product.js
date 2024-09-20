@@ -193,6 +193,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
         .then(async ({ data }) => {
           const responseData = data && data.data
           if (responseData) {
+            logger.info(`DEBUG ${JSON.stringify(responseData)}`)
             const blingProduct = !blingProductId && responseData.length ? responseData[0] : responseData
             if (blingProduct) {
               const idsProdutos = [blingProduct.id]
