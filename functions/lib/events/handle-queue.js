@@ -107,7 +107,7 @@ const addEventsQueue = async (event) => {
       logger.info(`${documentId}, ${processingAt.toDate().toISOString()}, ${processingTime}`)
     }
   } else {
-    logger.info('is empty')
+    logger.info('> is empty')
   }
 
   return null
