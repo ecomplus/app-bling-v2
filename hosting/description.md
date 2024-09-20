@@ -7,10 +7,10 @@ Na versão Beta será necessário seguir alguns procedimentos no painel do Bling
 
 ### Acesse a área de Apps no Bling
 
-<img src="./menu.PNG"> <img />
+<img src="./menu.png"> <img />
 
 ### Em seguida a Área do Integrador 
-<img src="./area_do_integrador.PNG"> <img />
+<img src="./area_do_integrador.png"> <img />
 
 ### Clique em Criar Aplicativo
 
@@ -54,7 +54,7 @@ Siga a referência  até confirmação de salvamento
 
 ### Ao finalizar:
 
-Você terá a seguinte tela: 
+Você verá informações semelhantes: 
 <img src="./bling.png"> <img/>
 
 * Copie o ***Client Id*** e aqui nas configurações do app
