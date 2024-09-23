@@ -48,7 +48,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           promises.push(docRef.set({
             ...body,
             resourceId,
-            queue: 'order_numbers'
+            queue: 'order_numbers',
+            _blingId: numero
           }, { merge: true })
             .catch(logger.error)
           )
@@ -64,7 +65,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
           promises.push(docRef.set({
             ...body,
             resourceId,
-            queue: 'skus'
+            queue: 'skus',
+            _blingId: id
           }, { merge: true })
             .catch(logger.error)
           )

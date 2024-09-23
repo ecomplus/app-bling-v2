@@ -197,9 +197,10 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
             const blingProduct = !blingProductId && responseData.length ? responseData[0] : responseData
             if (blingProduct) {
               const idsProdutos = [blingProduct.id]
+              const _blingId = queueEntry._blingId
 
               const blingProductData = !blingProductId
-                ? await bling.get(`/produtos/${blingProduct.id}`)
+                ? await bling.get(`/produtos/${blingProduct.id || _blingId}`)
                   .then(({ data: { data } }) => {
                     if (data.variacao?.produtoPai?.id) {
                       const id = data.variacao?.produtoPai?.id

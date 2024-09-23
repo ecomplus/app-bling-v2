@@ -38,7 +38,8 @@ const handleEvents = async (event) => {
       queue,
       canCreateNew,
       mustUpdateAppQueue,
-      isHiddenQueue
+      isHiddenQueue,
+      _blingId
     } = data
 
     const appSdk = await getAppSdk()
@@ -51,6 +52,15 @@ const handleEvents = async (event) => {
 
       const handler = integrationHandlers[action][queue.toLowerCase()]
       const queueEntry = { action, queue, nextId: resourceId, mustUpdateAppQueue }
+      /*
+        In some cases when importing products, Bling returns an empty list when searching for the SKU
+        (which appears to be a bug in the Bling API, as it is a webhook event from Bling itself).
+        To get around this, we will search for the product ID in Bling only if the list is empty.
+      */
+
+      if (_blingId) {
+        queueEntry._blingId = _blingId
+      }
 
       if (resourceId && handler) {
         logger.info(`> Start [${eventBy}]: ${action} ${queue} ${resourceId}`)
