@@ -92,6 +92,8 @@ exports.post = async ({ appSdk, admin }, req, res) => {
               let canCreateNew = false
 
               if (trigger.resource === 'applications') {
+                console.log(`appData: ${JSON.stringify(appData)}`)
+                console.log(`body ${JSON.stringify(trigger)}`)
                 integrationConfig = appData
                 canCreateNew = true
               } else if (trigger.authentication_id !== auth.myId) {
