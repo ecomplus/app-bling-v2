@@ -148,7 +148,7 @@ module.exports = (product, originalBlingProduct, blingProductCode, blingStore, a
         blingVariation.estoque.maximo = variation.quantity
       } else if (blingVariationOriginal) {
         blingVariation.estoque = blingVariation.estoque || {}
-        blingProduct.estoque.maximo = blingVariationOriginal.estoque.maximo
+        blingVariation.estoque.maximo = blingVariationOriginal.estoque.maximo
       }
 
       if (variation.mpn && variation.mpn.length) {
