@@ -149,7 +149,7 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
             }
 
             if (order.items?.length !== itemsBling?.length) {
-              logger.info('Bling Item(s) not found')
+              logger.warn(`Bling Item(s) not found orderItems: ${JSON.stringify(order.items)} => blingItems${JSON.stringify(itemsBling)}`)
               throw new Error('Bling Item(s) not found')
             }
 
