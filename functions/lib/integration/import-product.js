@@ -11,24 +11,26 @@ const createUpdateProduct = async ({ appSdk, storeId, auth }, appData, sku, prod
   }
   blingItems.forEach(blingItem => {
     if (Array.isArray(blingItem.depositos)) {
-      const deposit = blingItem.depositos.find((deposito) => String(deposito.id) === String(blingDeposit)) || blingItem.depositos[0]
-      if (deposit) {
-        let quantity
+      const depositFind = blingItem.depositos.find((deposito) => String(deposito.id) === String(blingDeposit))
+      const deposits = depositFind ? [depositFind] : blingItem.depositos
+      let quantity = 0
+      deposits.forEach(deposit => {
         if (Number(storeId) === 51292 || appData.has_stock_reserve) {
-          quantity = Number(deposit.saldoVirtual)
+          quantity += !Number.isNaN(Number(deposit.saldoVirtual)) ? Number(deposit.saldoVirtual) : 0
         } else {
-          quantity = Number(deposit.saldoFisico)
+          quantity += !Number.isNaN(Number(deposit.saldoFisico)) ? Number(deposit.saldoFisico) : 0
         }
-        if (!isNaN(quantity)) {
-          blingItem.estoqueAtual = quantity
-          delete blingItem.depositos
-        }
-      }
+      })
+
+      blingItem.estoqueAtual = quantity
+      delete blingItem.depositos
     }
   })
 
   const blingProductFind = !variationId ? blingProduct : blingItems.find(item => item.codigo === sku)
   let quantity = Number(blingProductFind.estoqueAtual)
+
+  logger.info(`> BlingProduct: ${JSON.stringify(blingProduct)}`)
 
   if (product && (isStockOnly === true || !appData.update_product || variationId)) {
     if (!isNaN(quantity)) {
@@ -79,7 +81,7 @@ const createUpdateProduct = async ({ appSdk, storeId, auth }, appData, sku, prod
           value: `${blingProduct.id}`
         })
       }
-      logger.info(`#${storeId} ${method} ${endpoint} ${JSON.stringify(bodyProduct)}`)
+      logger.info(`#${storeId} ${method} ${endpoint}`)
 
       return appSdk.apiRequest(storeId, endpoint, method, bodyProduct, auth)
     })
