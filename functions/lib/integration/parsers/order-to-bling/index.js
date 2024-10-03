@@ -1,5 +1,6 @@
 const ecomUtils = require('@ecomplus/utils')
 const parseAddress = require('../address-to-bling')
+const { logger } = require('../../../../context')
 
 module.exports = (order, blingOrderNumber, blingStore, appData, customerIdBling, paymentTypeId, itemsBling, originalBlingOrder) => {
   try {
@@ -62,7 +63,7 @@ module.exports = (order, blingOrderNumber, blingStore, appData, customerIdBling,
           const addDaysMs = i ? (i * 30 * 24 * 60 * 60 * 1000) : 0
           const deadLine = new Date(date + addDaysMs)
           blingOrder.parcelas.push({
-            dataVencimento: deadLine.substring(0, 10),
+            dataVencimento: deadLine.toISOString().substring(0, 10),
             valor: vlr,
             observacoes: `${blingPaymentLabel} (${(i + 1)}/${number})`,
             formaPagamento: { id: paymentTypeId }
@@ -137,6 +138,6 @@ module.exports = (order, blingOrderNumber, blingStore, appData, customerIdBling,
 
     return blingOrder
   } catch (err) {
-    console.error(err)
+    logger.error(err)
   }
 }
