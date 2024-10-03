@@ -175,6 +175,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
 
       if (!product && (isHiddenQueue || productId) && !appData.import_product) {
         const err = new Error('Skip')
+        err.isHiddenQueue = isHiddenQueue
         throw err
       }
       return payload
@@ -259,11 +260,10 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
       return createUpdateProduct({ appSdk, storeId, auth }, appData, sku, product, variationId, blingDeposit, blingProduct, isStockOnly)
     })
     .catch(err => {
-      if (err.name === 'Skip') {
-        logger.info(`#${storeId} skipping ${sku} / ${productId}`)
+      if (err.message === 'Skip') {
+        logger.info(`#${storeId} skipping ${sku} / ${productId} => isHiddenQueue: ${err.isHiddenQueue}`)
         return { status: 'skipping' }
       }
-
       throw err
     })
 }
