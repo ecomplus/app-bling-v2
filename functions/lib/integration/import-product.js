@@ -271,6 +271,9 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
         logger.info(`#${storeId} skipping ${sku} / ${productId} => isHiddenQueue: ${err.isHiddenQueue}`)
         return { status: 'skipping' }
       }
+      if (err.response && err.response.data) {
+        logger.warn(`${err.response.data}`)
+      }
       throw err
     })
 }
