@@ -139,6 +139,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
 
   return findingProduct
     .then(product => {
+      logger.warn(`product: ${JSON.stringify(product)}`)
       const hasVariations = product && product.variations && product.variations.length
       if (hasVariations) {
         const variation = product.variations.find(variation => sku === variation.sku)
@@ -149,6 +150,9 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
             hasVariations
           }
         } else if (isHiddenQueue) {
+          if (product.sku === sku) {
+            return { product }
+          }
           return null
         } else if (!appData.update_product) {
           const msg = sku +
