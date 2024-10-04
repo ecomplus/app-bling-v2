@@ -25,14 +25,23 @@ module.exports = async (blingAxios, order) => {
     )
   })
 
-  return Promise.all(promise)
-    .then(response => {
-      const list = []
-      response.forEach((item) => {
-        if (item) {
-          list.push(item)
-        }
-      })
-      return list
-    })
+  // return Promise.all(promise)
+  //   .then(response => {
+  //     const list = []
+  //     response.forEach((item) => {
+  //       if (item) {
+  //         list.push(item)
+  //       }
+  //     })
+  //     return list
+  //   })
+
+  const list = []
+  for await (const result of promise) {
+    if (result) {
+      list.push(result)
+    }
+  }
+
+  return list
 }

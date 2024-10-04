@@ -169,6 +169,8 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
     .then(payload => {
       if (!payload && !appData.import_product) {
         const err = new Error('Skip')
+        err.isHiddenQueue = isHiddenQueue
+        err._payload = payload
         throw err
       }
       const { product } = payload
@@ -176,6 +178,7 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
       if (!product && (isHiddenQueue || productId) && !appData.import_product) {
         const err = new Error('Skip')
         err.isHiddenQueue = isHiddenQueue
+        err._payload = payload
         throw err
       }
       return payload

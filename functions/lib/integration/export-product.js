@@ -178,7 +178,12 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, blingDeposit, queueEntr
             })
           }
 
-          await Promise.all(promise)
+          // await Promise.all(promise)
+          for await (const result of promise) {
+            if (result) {
+              //
+            }
+          }
 
           return response
         })
