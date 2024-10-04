@@ -81,7 +81,7 @@ const createUpdateProduct = async ({ appSdk, storeId, auth }, appData, sku, prod
           value: `${blingProduct.id}`
         })
       }
-      logger.info(`#${storeId} ${method} ${endpoint}`)
+      logger.info(`#${storeId} ${method} ${endpoint} body: ${JSON.stringify(bodyProduct)}`)
 
       return appSdk.apiRequest(storeId, endpoint, method, bodyProduct, auth)
     })

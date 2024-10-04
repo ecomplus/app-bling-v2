@@ -1,5 +1,6 @@
 const ecomUtils = require('@ecomplus/utils')
 const axios = require('axios')
+const { logger } = require('../../../context')
 const FormData = require('form-data')
 
 const removeAccents = str => str.replace(/áàãâÁÀÃÂ/g, 'a')
@@ -313,6 +314,9 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
               variation.sku = codigo || String(id)
               variation.specifications = specifications
               variation.quantity = variacao.estoqueAtual || 0
+
+              logger.warn(`BlingV: ${JSON.stringify(variacao)} v:${JSON.stringify(variation)}`)
+
               if (pictureId > 0) {
                 variation.picture_id = pictureId
               }
