@@ -6,6 +6,12 @@ const { logger } = require('../../context')
 const limitTimeProcessing = (2 * 60 * 1000)
 const Timestamp = admin.firestore.Timestamp
 
+const delay = (timeoutMs = 1000) => new Promise(resolve => {
+  setTimeout(() => {
+    resolve(true)
+  }, timeoutMs)
+})
+
 const deleteEvent = (storeId, id) => {
   return admin.firestore().doc(`running_events/${storeId}_${id}`)
     .delete()
@@ -17,6 +23,7 @@ const createEvent = async (storeId, id, documentId) => {
   if (docEventSnapshot.exists) {
     const { createdAt } = docEventSnapshot.data()
     if ((new Date().getTime() - new Date(createdAt).getTime()) > limitTimeProcessing) {
+      // remove event queue and send to last
       await docEvent.delete()
       return admin.firestore().doc(`${documentId}`)
         .update({
@@ -27,6 +34,7 @@ const createEvent = async (storeId, id, documentId) => {
     }
   }
 
+  await delay()
   return docEvent.set({
     documentId,
     storeId,
