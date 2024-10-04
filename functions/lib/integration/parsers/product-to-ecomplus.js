@@ -313,7 +313,7 @@ module.exports = (blingProduct, variations, storeId, auth, isNew = true, appData
               variation.name = `${name} / ${specTexts.join(' / ')}`.substring(0, 100)
               variation.sku = codigo || String(id)
               variation.specifications = specifications
-              variation.quantity = variacao.estoqueAtual || 0
+              variation.quantity = variacao.estoqueAtual >= 0 ? variacao.estoqueAtual : 0
 
               // logger.warn(`BlingV: ${JSON.stringify(variacao)} v:${JSON.stringify(variation)}`)
 

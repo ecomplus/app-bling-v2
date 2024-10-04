@@ -265,20 +265,11 @@ module.exports = async ({ appSdk, storeId, auth }, _blingStore, blingDeposit, qu
       const { product, variationId } = payload
       const isStockOnly = Boolean(product && !(appData.update_product || appData.update_product_auto))
       return createUpdateProduct({ appSdk, storeId, auth }, appData, sku, product, variationId, blingDeposit, blingProduct, isStockOnly)
-        .catch(err => {
-          if (err.response && err.response.data) {
-            logger.warn(`${err.response.data}`)
-          }
-          throw err
-        })
     })
     .catch(err => {
       if (err.message === 'Skip') {
         logger.info(`#${storeId} skipping ${sku} / ${productId} => isHiddenQueue: ${err.isHiddenQueue}`)
         return { status: 'skipping' }
-      }
-      if (err.response && err.response.data) {
-        logger.warn(`${err.response.data}`)
       }
       throw err
     })
