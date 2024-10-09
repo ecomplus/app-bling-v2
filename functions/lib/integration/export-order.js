@@ -139,10 +139,9 @@ module.exports = ({ appSdk, storeId, auth }, blingStore, _blingDeposit, queueEnt
                 : String(order.number)
             }
 
-            const [customerIdBling, itemsBling] = await Promise.all([
-              getCustomerBling(bling, appData, order),
-              getProductsBling(bling, order)
-            ])
+            const customerIdBling = await getCustomerBling(bling, appData, order)
+            const itemsBling = await getProductsBling(bling, order)
+
             if (!customerIdBling) {
               logger.info('Bling Customer not found')
               throw new Error('Bling Customer not found')
