@@ -14,25 +14,26 @@ class Bling {
     this.last_request = null
   }
 
-  async checkTime (url) {
-    return new Promise(resolve => {
-      const now = new Date()
-      if (!this.last_request) {
-        this.last_request = now
-        resolve(true)
-      } else {
-        const timeout = now.getTime() - this.last_request.getTime()
-        if (timeout >= 1000) {
-          this.last_request = now
-          resolve(true)
-        } else {
-          setTimeout(() => {
-            this.last_request = new Date()
-            resolve(true)
-          }, 1000 - timeout)
-        }
-      }
+  async delay (timeout) {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(true), timeout)
     })
+  }
+
+  async checkTime (url) {
+    const now = new Date()
+    if (!this.last_request) {
+      this.last_request = now
+      return true
+    }
+    const timeout = now.getTime() - this.last_request.getTime()
+    if (timeout >= 1000) {
+      this.last_request = new Date()
+      return true
+    }
+    await this.delay(1000 - timeout)
+    this.last_request = new Date()
+    return true
   }
 
   async get (url, opts) {
@@ -47,6 +48,10 @@ class Bling {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
             const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            if (!isDailyRateLimitError) {
+              await this.delay(1000)
+              return this._bling.get(url, opts)
+            }
             this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.get(url, opts)
           }
@@ -67,6 +72,10 @@ class Bling {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
             const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            if (!isDailyRateLimitError) {
+              await this.delay(1000)
+              return this._bling.post(url, data, opts)
+            }
             this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.post(url, data, opts)
           }
@@ -87,6 +96,10 @@ class Bling {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
             const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            if (!isDailyRateLimitError) {
+              await this.delay(1000)
+              return this._bling.patch(url, data, opts)
+            }
             this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.patch(url, data, opts)
           }
@@ -107,6 +120,10 @@ class Bling {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
             const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            if (!isDailyRateLimitError) {
+              await this.delay(1000)
+              return this._bling.put(url, data, opts)
+            }
             this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.put(url, data, opts)
           }
@@ -127,6 +144,10 @@ class Bling {
           const errorType = err.response.data.error?.type
           if (errorType === 'TOO_MANY_REQUESTS') {
             const isDailyRateLimitError = Boolean(err.response.data.error?.description?.includes('diário'))
+            if (!isDailyRateLimitError) {
+              await this.delay(1000)
+              return this._bling.delete(url)
+            }
             this._bling = await blingAxios(this.clientId, this.clientSecret, this.storeId, timeForce, isDailyRateLimitError)
             return this._bling.delete(url)
           }

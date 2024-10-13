@@ -35,7 +35,8 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
       // enable daily rate limit
       await docRef.set({
         isRateLimit: false,
-        updatedAt: now
+        updatedAt: now,
+        countErr: 0
       }, { merge: true }).catch(logger.error)
 
       throw new Error('Bling daily rate limit reached, please try again later')
@@ -45,7 +46,8 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
       // disable daily rate limit
       await docRef.set({
         isRateLimit: false,
-        updatedAt: now
+        updatedAt: now,
+        countErr: 0
       }, { merge: true }).catch(logger.error)
     }
 
@@ -61,21 +63,27 @@ module.exports = async function (clientId, clientSecret, storeId, tokenExpiratio
         await docRef.set({
           ...data,
           updatedAt: now,
-          expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000))
+          expiredAt: Timestamp.fromMillis(now.toMillis() + ((data.expires_in - 3600) * 1000)),
+          countErr: 0
         }, { merge: true })
         accessToken = data.access_token
       } catch (err) {
-        logger.warn(`Cant refresh Bling OAtuh token ${JSON.stringify({
+        logger.warn(`Cant refresh Bling OAuth token ${JSON.stringify({
           url: err.config.url,
           body: err.config.data,
           response: err.response.data,
           status: err.response.status
         })}`)
+        const doc = await docRef.get()
 
-        await docRef.set({
-          isBloqued: true,
-          updatedAt: now
-        }, { merge: true }).catch(logger.error)
+        const countErr = doc.data().countErr || 0
+
+        if (countErr > 3) {
+          await docRef.set({
+            isBloqued: true,
+            updatedAt: now
+          }, { merge: true }).catch(logger.error)
+        }
         throw err
       }
     }
